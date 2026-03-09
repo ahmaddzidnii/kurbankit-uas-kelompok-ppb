@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../core/configs/theme/app_colors.dart';
-import '../../../core/configs/theme/app_spacing.dart';
-import '../../../core/configs/theme/app_typography.dart';
-import '../../../core/configs/theme/app_radius.dart';
+import 'package:qurban_kit/core/configs/theme/theme.dart';
 
 class OnboardingPage extends StatefulWidget {
   const OnboardingPage({super.key});
@@ -79,7 +76,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                 alignment: Alignment.center,
                 child: Image.asset(
                   'assets/images/qurbankit-logo-onboarding.png',
-                  width: 174,
+                  width: 148,
                   height: 56,
                   fit: BoxFit.contain,
                 ),
@@ -163,12 +160,13 @@ class _OnboardingContent extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
       child: Column(
         children: [
-          // Ilustrasi
-          Expanded(
-            flex: 3,
+          // Ilustrasi dengan tinggi tetap
+          SizedBox(
+            height: 280,
             child: Center(
               child: Image.asset(
                 data.image,
+                height: 280,
                 fit: BoxFit.contain,
                 errorBuilder: (context, error, stackTrace) {
                   // Placeholder jika gambar belum ada
@@ -207,30 +205,44 @@ class _OnboardingContent extends StatelessWidget {
 
           AppSpacing.vSpaceLg,
 
-          // Judul
-          Text(
-            data.title,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: AppTypography.headingLarge,
-              fontWeight: AppTypography.bold,
-              color: AppColors.textBase,
-              height: 1.3,
+          // Judul dengan alokasi 2 baris
+          SizedBox(
+            height: 68, // Alokasi untuk 2 baris
+            child: Center(
+              child: Text(
+                data.title,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: AppTypography.headingLarge,
+                  fontWeight: AppTypography.bold,
+                  color: AppColors.textBase,
+                  height: 1.3,
+                ),
+              ),
             ),
           ),
 
           AppSpacing.vSpaceSm,
 
-          // Deskripsi
+          // Deskripsi dengan alokasi 3 baris
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-            child: Text(
-              data.description,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: AppTypography.bodyMedium,
-                color: AppColors.textSubdued,
-                height: 1.5,
+            child: SizedBox(
+              height: 72, // Alokasi untuk 3 baris
+              child: Center(
+                child: Text(
+                  data.description,
+                  textAlign: TextAlign.center,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: AppTypography.bodyMedium,
+                    color: AppColors.textSubdued,
+                    height: 1.5,
+                  ),
+                ),
               ),
             ),
           ),

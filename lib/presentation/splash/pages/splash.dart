@@ -3,9 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:qurban_kit/presentation/onboarding/pages/onboarding.dart';
-import '../../../core/configs/theme/app_colors.dart';
-import '../../../core/configs/theme/app_spacing.dart';
-import '../../../core/configs/theme/app_typography.dart';
+import 'package:qurban_kit/core/configs/theme/theme.dart';
 
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
