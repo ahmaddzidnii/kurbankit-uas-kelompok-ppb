@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:qurban_kit/core/configs/theme/theme.dart';
+import 'package:qurban_kit/core/services/onboarding_service.dart';
+import 'package:qurban_kit/presentation/auth/pages/auth.dart';
 
 class OnboardingPage extends StatefulWidget {
   const OnboardingPage({super.key});
@@ -58,9 +60,22 @@ class _OnboardingPageState extends State<OnboardingPage> {
         curve: Curves.easeInOut,
       );
     } else {
-      // Navigate to home/main page
-      // TODO: Implement navigation
+      // Mark onboarding as completed and navigate to auth
+      _completeOnboarding();
     }
+  }
+
+  Future<void> _completeOnboarding() async {
+    // Mark onboarding as completed
+    await OnboardingService.completeOnboarding();
+
+    if (!mounted) return;
+
+    // Navigate to auth page
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const AuthPage()),
+    );
   }
 
   @override

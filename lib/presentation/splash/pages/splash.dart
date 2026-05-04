@@ -3,7 +3,9 @@
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:qurban_kit/presentation/onboarding/pages/onboarding.dart';
+import 'package:qurban_kit/presentation/auth/pages/auth.dart';
 import 'package:qurban_kit/core/configs/theme/theme.dart';
+import 'package:qurban_kit/core/services/onboarding_service.dart';
 
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
@@ -19,7 +21,7 @@ class _SplashPageState extends State<SplashPage> {
   void initState() {
     super.initState();
     _loadVersion();
-    redirectToHome(context);
+    _redirectToNextPage(context);
   }
 
   Future<void> _loadVersion() async {
@@ -84,10 +86,35 @@ class _SplashPageState extends State<SplashPage> {
   }
 }
 
-Future<void> redirectToHome(BuildContext context) async {
-  await Future.delayed(const Duration(seconds: 4)); // Simulasi loading
+/// Determine next page based on onboarding and login status
+/// - New user → Onboarding
+/// - Not new & logged in → Home (TODO: navigate to home page)
+/// - Not new & not logged in → Auth
+Future<void> _redirectToNextPage(BuildContext context) async {
+  await Future.delayed(const Duration(seconds: 4)); // Splash duration
+
+  final isNewUser = await OnboardingService.isNewUser();
+  final isLoggedIn = await OnboardingService.isUserLoggedIn();
+
+  Widget nextPage;
+
+  if (isNewUser) {
+    // Show onboarding for new users
+    nextPage = const OnboardingPage();
+  } else {
+    // User has completed onboarding
+    if (isLoggedIn) {
+      // TODO: Replace dengan route ke home page sesuai struktur app Anda
+      // nextPage = const HomePage();
+      nextPage = const AuthPage(); // Temporary, replace with HomePage
+    } else {
+      // Show auth page if not logged in
+      nextPage = const AuthPage();
+    }
+  }
+
   Navigator.pushReplacement(
     context,
-    MaterialPageRoute(builder: (context) => const OnboardingPage()),
+    MaterialPageRoute(builder: (context) => nextPage),
   );
 }
