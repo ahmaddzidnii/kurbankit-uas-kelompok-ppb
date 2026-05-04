@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:qurban_kit/core/configs/exceptions.dart';
 import 'package:qurban_kit/core/configs/theme/theme.dart';
 import 'package:qurban_kit/core/services/onboarding_service.dart';
+import 'package:qurban_kit/core/services/service_locator.dart';
 import 'package:qurban_kit/presentation/auth/pages/register.dart';
 
 class AuthPage extends StatefulWidget {
@@ -35,20 +37,36 @@ class _AuthPageState extends State<AuthPage> {
     setState(() => _isLoading = true);
 
     try {
-      // Simulasi login - replace dengan API call sesuai kebutuhan
-      await Future.delayed(const Duration(seconds: 2));
+      final user = await authRepository.login(
+        _emailController.text,
+        _passwordController.text,
+      );
+
+      if (!mounted) return;
 
       // Mark user as logged in
       await OnboardingService.setLoginStatus(true);
 
-      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Selamat datang, ${user.name}!')));
 
       // Navigate to home page
-      // TODO: Replace dengan route ke home page sesuai struktur app Anda
       Navigator.pushReplacementNamed(context, '/home');
+    } on UnauthorizedException {
+      setState(() => _errorMessage = 'Email atau password salah');
+    } on ValidationException catch (e) {
+      setState(() => _errorMessage = e.message);
+    } on NetworkException {
+      setState(
+        () =>
+            _errorMessage = 'Gagal terhubung ke server. Periksa koneksi Anda.',
+      );
+    } on ServerException catch (e) {
+      setState(() => _errorMessage = e.message);
     } catch (e) {
-      if (!mounted) return;
-      setState(() => _errorMessage = 'Email atau password salah. Silakan coba');
+      print('Unexpected error in login: $e');
+      setState(() => _errorMessage = 'Terjadi kesalahan: $e');
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -322,6 +340,10 @@ class _AuthPageState extends State<AuthPage> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.essentialBrightAccent,
                           foregroundColor: Colors.white,
+                          disabledBackgroundColor: AppColors
+                              .essentialBrightAccent
+                              .withValues(alpha: 0.6),
+                          disabledForegroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),

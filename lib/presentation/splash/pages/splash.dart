@@ -4,8 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:qurban_kit/presentation/onboarding/pages/onboarding.dart';
 import 'package:qurban_kit/presentation/auth/pages/auth.dart';
+import 'package:qurban_kit/presentation/home/pages/home.dart';
 import 'package:qurban_kit/core/configs/theme/theme.dart';
 import 'package:qurban_kit/core/services/onboarding_service.dart';
+import 'package:qurban_kit/core/services/service_locator.dart';
 
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
@@ -88,7 +90,7 @@ class _SplashPageState extends State<SplashPage> {
 
 /// Determine next page based on onboarding and login status
 /// - New user → Onboarding
-/// - Not new & logged in → Home (TODO: navigate to home page)
+/// - Not new & logged in → Home (with API profile check)
 /// - Not new & not logged in → Auth
 Future<void> _redirectToNextPage(BuildContext context) async {
   await Future.delayed(const Duration(seconds: 4)); // Splash duration
@@ -104,17 +106,25 @@ Future<void> _redirectToNextPage(BuildContext context) async {
   } else {
     // User has completed onboarding
     if (isLoggedIn) {
-      // TODO: Replace dengan route ke home page sesuai struktur app Anda
-      // nextPage = const HomePage();
-      nextPage = const AuthPage(); // Temporary, replace with HomePage
+      // Check API for user profile
+      try {
+        final user = await authRepository.getProfile();
+        nextPage = HomePage(initialUser: user);
+      } catch (e) {
+        print('Error fetching profile: $e');
+        // Show HomePage anyway, it will handle fetching profile
+        nextPage = const HomePage();
+      }
     } else {
       // Show auth page if not logged in
       nextPage = const AuthPage();
     }
   }
 
-  Navigator.pushReplacement(
-    context,
-    MaterialPageRoute(builder: (context) => nextPage),
-  );
+  if (context.mounted) {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => nextPage),
+    );
+  }
 }

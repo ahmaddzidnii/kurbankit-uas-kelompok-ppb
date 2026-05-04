@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:qurban_kit/core/configs/exceptions.dart';
 import 'package:qurban_kit/core/configs/theme/theme.dart';
+import 'package:qurban_kit/core/services/service_locator.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -68,8 +70,11 @@ class _RegisterPageState extends State<RegisterPage> {
     setState(() => _isLoading = true);
 
     try {
-      // Simulasi register - replace dengan API call sesuai kebutuhan
-      await Future.delayed(const Duration(seconds: 2));
+      await authRepository.register(
+        _namaController.text,
+        _emailController.text,
+        _passwordController.text,
+      );
 
       if (!mounted) return;
 
@@ -78,9 +83,18 @@ class _RegisterPageState extends State<RegisterPage> {
       );
 
       Navigator.pop(context);
+    } on ValidationException catch (e) {
+      if (e.errors != null) {
+        setState(() => _fieldErrors = e.errors!.cast<String, String>());
+      } else {
+        setState(() => _errorMessage = e.message);
+      }
+    } on ServerException catch (e) {
+      setState(() => _errorMessage = e.message);
+    } on NetworkException {
+      setState(() => _errorMessage = 'Gagal terhubung ke server');
     } catch (e) {
-      if (!mounted) return;
-      setState(() => _errorMessage = 'Mohon periksa kembali data Anda.');
+      setState(() => _errorMessage = 'Registrasi gagal. Silakan coba lagi.');
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -297,6 +311,10 @@ class _RegisterPageState extends State<RegisterPage> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.essentialBrightAccent,
                           foregroundColor: Colors.white,
+                          disabledBackgroundColor: AppColors
+                              .essentialBrightAccent
+                              .withValues(alpha: 0.6),
+                          disabledForegroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),
