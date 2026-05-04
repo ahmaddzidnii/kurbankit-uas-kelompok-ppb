@@ -4,7 +4,6 @@ import 'package:qurban_kit/core/configs/theme/theme.dart';
 import 'package:qurban_kit/core/services/onboarding_service.dart';
 import 'package:qurban_kit/core/services/service_locator.dart';
 import 'package:qurban_kit/data/models/auth_models.dart';
-import 'package:qurban_kit/presentation/auth/pages/auth.dart';
 
 class HomePage extends StatefulWidget {
   final UserData? initialUser;
@@ -24,8 +23,42 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     _user = widget.initialUser;
+
+    // Setup callback untuk unauthorized (401) error
+    apiClient.setOnUnauthorized(_handleUnauthorized);
+
     if (_user == null) {
       _fetchUserProfile();
+    }
+  }
+
+  @override
+  void dispose() {
+    // Clear callback saat dispose
+    apiClient.clearOnUnauthorized();
+    super.dispose();
+  }
+
+  void _handleUnauthorized() {
+    if (mounted) {
+      _redirectToLogin();
+    }
+  }
+
+  Future<void> _redirectToLogin() async {
+    // Clear tokens
+    await authRepository.clearTokens();
+    await OnboardingService.setLoginStatus(false);
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Token kadaluarsa. Silakan login kembali.'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+
+      Navigator.pushReplacementNamed(context, '/auth');
     }
   }
 
@@ -42,6 +75,8 @@ class _HomePageState extends State<HomePage> {
       } else {
         setState(() => _errorMessage = 'Gagal memuat profil pengguna');
       }
+    } on UnauthorizedException {
+      _redirectToLogin();
     } on AppException catch (e) {
       setState(() => _errorMessage = e.message);
     } catch (e) {
@@ -92,6 +127,19 @@ class _HomePageState extends State<HomePage> {
 
       // Navigate to auth page
       if (mounted) {
+        Navigator.pushReplacementNamed(context, '/auth');
+      }
+    } on UnauthorizedException {
+      // Token already invalid, just clear and redirect
+      await authRepository.clearTokens();
+      await OnboardingService.setLoginStatus(false);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Sesi berakhir. Silakan login kembali.'),
+          ),
+        );
         Navigator.pushReplacementNamed(context, '/auth');
       }
     } on AppException catch (e) {

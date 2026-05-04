@@ -12,6 +12,7 @@ abstract class AuthRepository {
   Future<void> saveToken(String token);
   Future<String?> getAccessToken();
   Future<void> clearTokens();
+  Future<bool> restoreToken();
 }
 
 class AuthRepositoryImpl implements AuthRepository {
@@ -124,6 +125,21 @@ class AuthRepositoryImpl implements AuthRepository {
       _apiClient.clearAuthToken();
     } catch (e) {
       throw CacheException(message: 'Failed to clear tokens');
+    }
+  }
+
+  @override
+  Future<bool> restoreToken() async {
+    try {
+      final token = await getAccessToken();
+      if (token != null && token.isNotEmpty) {
+        _apiClient.setAuthToken(token);
+        return true;
+      }
+      return false;
+    } catch (e) {
+      print('Error restoring token: $e');
+      return false;
     }
   }
 }

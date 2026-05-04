@@ -106,14 +106,25 @@ Future<void> _redirectToNextPage(BuildContext context) async {
   } else {
     // User has completed onboarding
     if (isLoggedIn) {
-      // Check API for user profile
-      try {
-        final user = await authRepository.getProfile();
-        nextPage = HomePage(initialUser: user);
-      } catch (e) {
-        print('Error fetching profile: $e');
-        // Show HomePage anyway, it will handle fetching profile
-        nextPage = const HomePage();
+      // Try to restore token from secure storage
+      final tokenRestored = await authRepository.restoreToken();
+
+      if (tokenRestored) {
+        // Token restored, try to fetch profile
+        try {
+          final user = await authRepository.getProfile();
+          nextPage = HomePage(initialUser: user);
+        } catch (e) {
+          print('Error fetching profile: $e');
+          // Token invalid, show auth page
+          await authRepository.clearTokens();
+          await OnboardingService.setLoginStatus(false);
+          nextPage = const AuthPage();
+        }
+      } else {
+        // No token found, show auth page
+        await OnboardingService.setLoginStatus(false);
+        nextPage = const AuthPage();
       }
     } else {
       // Show auth page if not logged in

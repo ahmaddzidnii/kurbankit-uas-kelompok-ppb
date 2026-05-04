@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 import 'package:qurban_kit/core/configs/api_config.dart';
 import 'package:qurban_kit/core/configs/exceptions.dart';
@@ -6,6 +7,7 @@ class ApiClient {
   static final ApiClient _instance = ApiClient._internal();
   late final Dio _dio;
   String? _authToken;
+  VoidCallback? _onUnauthorized;
 
   factory ApiClient() {
     return _instance;
@@ -30,6 +32,16 @@ class ApiClient {
   /// Clear token
   void clearAuthToken() {
     _authToken = null;
+  }
+
+  /// Set callback untuk unauthorized (401) error
+  void setOnUnauthorized(VoidCallback callback) {
+    _onUnauthorized = callback;
+  }
+
+  /// Clear callback
+  void clearOnUnauthorized() {
+    _onUnauthorized = null;
   }
 
   /// GET request
@@ -117,8 +129,13 @@ class ApiClient {
 
       // 401 Unauthorized
       if (statusCode == 401) {
+        // Trigger callback jika ada
+        _onUnauthorized?.call();
+
         throw UnauthorizedException(
-          message: data?['message'] ?? 'Email atau password salah',
+          message:
+              data?['message'] ??
+              'Token sudah kadaluarsa. Silakan login kembali.',
         );
       }
 
