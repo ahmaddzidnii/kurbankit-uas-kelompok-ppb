@@ -3,11 +3,10 @@
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:qurban_kit/presentation/onboarding/pages/onboarding.dart';
-import 'package:qurban_kit/presentation/auth/pages/auth.dart';
-import 'package:qurban_kit/presentation/home/pages/home.dart';
 import 'package:qurban_kit/core/configs/theme/theme.dart';
 import 'package:qurban_kit/core/services/onboarding_service.dart';
 import 'package:qurban_kit/core/services/service_locator.dart';
+import 'package:qurban_kit/core/services/user_role_service.dart';
 
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
@@ -52,6 +51,16 @@ class _SplashPageState extends State<SplashPage> {
               // Spacer bawah
               const Spacer(flex: 3),
 
+              // Loading Indicator
+              const CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  AppColors.essentialBrightAccent,
+                ),
+                strokeWidth: 3,
+              ),
+
+              const Spacer(flex: 3),
+
               // Version dan Deskripsi di bawah
               Column(
                 children: [
@@ -76,8 +85,6 @@ class _SplashPageState extends State<SplashPage> {
                     ),
                     textAlign: TextAlign.center,
                   ),
-
-                  AppSpacing.vSpaceMd,
                 ],
               ),
             ],
@@ -90,7 +97,10 @@ class _SplashPageState extends State<SplashPage> {
 
 /// Determine next page based on onboarding and login status
 /// - New user → Onboarding
-/// - Not new & logged in → Home (with API profile check)
+/// - Not new & logged in → Role-based routing:
+///   - SUPER_ADMIN → Admin Dashboard (verification)
+///   - ADMIN_MASJID (not registered) → Mosque Registration Form
+///   - ADMIN_MASJID (registered) → Mosque Waiting Dashboard
 /// - Not new & not logged in → Auth
 Future<void> _redirectToNextPage(BuildContext context) async {
   await Future.delayed(const Duration(seconds: 4)); // Splash duration
@@ -98,11 +108,11 @@ Future<void> _redirectToNextPage(BuildContext context) async {
   final isNewUser = await OnboardingService.isNewUser();
   final isLoggedIn = await OnboardingService.isUserLoggedIn();
 
-  Widget nextPage;
+  String? nextRoute;
 
   if (isNewUser) {
     // Show onboarding for new users
-    nextPage = const OnboardingPage();
+    nextRoute = '/onboarding';
   } else {
     // User has completed onboarding
     if (isLoggedIn) {
@@ -113,29 +123,62 @@ Future<void> _redirectToNextPage(BuildContext context) async {
         // Token restored, try to fetch profile
         try {
           final user = await authRepository.getProfile();
-          nextPage = HomePage(initialUser: user);
+
+          if (user != null) {
+            // Save role for future reference
+            if (user.role != null) {
+              await UserRoleService.setUserRole(user.role!);
+            }
+
+            // Route based on role
+            final userRole = await UserRoleService.getUserRole();
+
+            if (userRole == 'SUPER_ADMIN') {
+              nextRoute = '/admin-dashboard';
+            } else if (userRole == 'ADMIN_MASJID') {
+              final isMosqueRegistered =
+                  await UserRoleService.isMosqueRegistered();
+              if (isMosqueRegistered) {
+                nextRoute = '/mosque-dashboard-waiting';
+              } else {
+                nextRoute = '/mosque-registration';
+              }
+            } else {
+              // Default to home if role is unknown
+              nextRoute = '/home';
+            }
+          } else {
+            // Profile fetch returned null, show auth page
+            await authRepository.clearTokens();
+            await OnboardingService.setLoginStatus(false);
+            nextRoute = '/auth';
+          }
         } catch (e) {
           print('Error fetching profile: $e');
           // Token invalid, show auth page
           await authRepository.clearTokens();
           await OnboardingService.setLoginStatus(false);
-          nextPage = const AuthPage();
+          nextRoute = '/auth';
         }
       } else {
         // No token found, show auth page
         await OnboardingService.setLoginStatus(false);
-        nextPage = const AuthPage();
+        nextRoute = '/auth';
       }
     } else {
       // Show auth page if not logged in
-      nextPage = const AuthPage();
+      nextRoute = '/auth';
     }
   }
 
-  if (context.mounted) {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => nextPage),
-    );
+  if (context.mounted && nextRoute != null) {
+    if (nextRoute == '/onboarding') {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const OnboardingPage()),
+      );
+    } else {
+      Navigator.pushReplacementNamed(context, nextRoute);
+    }
   }
 }

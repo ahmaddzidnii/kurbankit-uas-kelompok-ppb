@@ -3,6 +3,7 @@ import 'package:qurban_kit/core/configs/exceptions.dart';
 import 'package:qurban_kit/core/configs/theme/theme.dart';
 import 'package:qurban_kit/core/services/onboarding_service.dart';
 import 'package:qurban_kit/core/services/service_locator.dart';
+import 'package:qurban_kit/core/services/user_role_service.dart';
 import 'package:qurban_kit/presentation/auth/pages/register.dart';
 
 class AuthPage extends StatefulWidget {
@@ -47,12 +48,33 @@ class _AuthPageState extends State<AuthPage> {
       // Mark user as logged in
       await OnboardingService.setLoginStatus(true);
 
+      // Save user role
+      if (user.role != null) {
+        await UserRoleService.setUserRole(user.role!);
+      }
+
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Selamat datang, ${user.name}!')));
 
-      // Navigate to home page
-      Navigator.pushReplacementNamed(context, '/home');
+      // Navigate based on role (same as splash screen logic)
+      final userRole = await UserRoleService.getUserRole();
+
+      if (!mounted) return;
+
+      if (userRole == 'SUPER_ADMIN') {
+        Navigator.pushReplacementNamed(context, '/admin-dashboard');
+      } else if (userRole == 'ADMIN_MASJID') {
+        final isMosqueRegistered = await UserRoleService.isMosqueRegistered();
+        if (isMosqueRegistered) {
+          Navigator.pushReplacementNamed(context, '/mosque-dashboard-waiting');
+        } else {
+          Navigator.pushReplacementNamed(context, '/mosque-registration');
+        }
+      } else {
+        // Default to home for other roles
+        Navigator.pushReplacementNamed(context, '/home');
+      }
     } on UnauthorizedException {
       setState(() => _errorMessage = 'Email atau password salah');
     } on ValidationException catch (e) {
