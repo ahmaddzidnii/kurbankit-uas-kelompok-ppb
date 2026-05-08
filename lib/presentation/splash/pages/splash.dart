@@ -100,7 +100,7 @@ class _SplashPageState extends State<SplashPage> {
 /// - Not new & logged in → Role-based routing:
 ///   - SUPER_ADMIN → Admin Dashboard (verification)
 ///   - ADMIN_MASJID (not registered) → Mosque Registration Form
-///   - ADMIN_MASJID (registered) → Mosque Waiting Dashboard
+///   - ADMIN_MASJID (registered) → Mosque Admin Dashboard
 /// - Not new & not logged in → Auth
 Future<void> _redirectToNextPage(BuildContext context) async {
   await Future.delayed(const Duration(seconds: 4)); // Splash duration
@@ -136,13 +136,9 @@ Future<void> _redirectToNextPage(BuildContext context) async {
             if (userRole == 'SUPER_ADMIN') {
               nextRoute = '/admin-dashboard';
             } else if (userRole == 'ADMIN_MASJID') {
-              final isMosqueRegistered =
-                  await UserRoleService.isMosqueRegistered();
-              if (isMosqueRegistered) {
-                nextRoute = '/mosque-dashboard-waiting';
-              } else {
-                nextRoute = '/mosque-registration';
-              }
+              // Admin Masjid goes directly to dashboard
+              // They can register mosque via the quick action button
+              nextRoute = '/mosque-admin-dashboard';
             } else {
               // Default to home if role is unknown
               nextRoute = '/home';

@@ -117,6 +117,35 @@ class _MosqueRegistrationPageState extends State<MosqueRegistrationPage> {
     );
   }
 
+  Future<void> _quickTestSkipRegistration() async {
+    // Quick test function - skip registration and go to admin dashboard
+    try {
+      await UserRoleService.setMosqueRegistered(true);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('✅ Test mode: Mosque marked as registered!'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+
+        // Navigate to admin dashboard
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if (mounted) {
+            Navigator.pushReplacementNamed(context, '/mosque-admin-dashboard');
+          }
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
+    }
+  }
+
   void _showSuccessDialog() {
     showDialog(
       context: context,
@@ -217,6 +246,14 @@ class _MosqueRegistrationPageState extends State<MosqueRegistrationPage> {
         title: const Text('Registrasi Masjid'),
         elevation: 0,
         actions: [
+          // Quick test button (for development)
+          Tooltip(
+            message: 'Skip registration & test dashboard (DEV ONLY)',
+            child: IconButton(
+              onPressed: _quickTestSkipRegistration,
+              icon: const Icon(Icons.fast_forward),
+            ),
+          ),
           IconButton(onPressed: _handleLogout, icon: const Icon(Icons.logout)),
         ],
       ),

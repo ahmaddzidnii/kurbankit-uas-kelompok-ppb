@@ -65,12 +65,9 @@ class _AuthPageState extends State<AuthPage> {
       if (userRole == 'SUPER_ADMIN') {
         Navigator.pushReplacementNamed(context, '/admin-dashboard');
       } else if (userRole == 'ADMIN_MASJID') {
-        final isMosqueRegistered = await UserRoleService.isMosqueRegistered();
-        if (isMosqueRegistered) {
-          Navigator.pushReplacementNamed(context, '/mosque-dashboard-waiting');
-        } else {
-          Navigator.pushReplacementNamed(context, '/mosque-registration');
-        }
+        // Admin Masjid goes directly to dashboard
+        // They can register mosque via the quick action button
+        Navigator.pushReplacementNamed(context, '/mosque-admin-dashboard');
       } else {
         // Default to home for other roles
         Navigator.pushReplacementNamed(context, '/home');
