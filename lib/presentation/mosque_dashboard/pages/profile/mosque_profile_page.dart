@@ -168,12 +168,6 @@ class MosqueProfilePage extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.xl),
               _buildNavTile(
-                icon: Icons.settings_outlined,
-                title: 'Account Settings',
-                onTap: () => Navigator.pop(context),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              _buildNavTile(
                 icon: Icons.help_outline_rounded,
                 title: 'Help & Support',
                 onTap: () {},

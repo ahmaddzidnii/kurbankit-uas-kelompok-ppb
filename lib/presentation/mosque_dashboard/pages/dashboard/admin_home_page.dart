@@ -3,6 +3,7 @@ import 'package:qurban_kit/core/configs/theme/theme.dart';
 import 'package:qurban_kit/core/services/service_locator.dart';
 import 'package:qurban_kit/core/services/user_role_service.dart';
 import 'package:qurban_kit/data/models/auth_models.dart';
+import 'package:qurban_kit/presentation/mosque_dashboard/pages/profile/mosque_profile_page.dart';
 
 class AdminHomePage extends StatefulWidget {
   final UserData? user;
@@ -160,6 +161,14 @@ class _AdminHomePageState extends State<AdminHomePage> {
             const SizedBox(width: AppSpacing.md),
             // Profile avatar
             GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => MosqueProfilePage(user: _user),
+                  ),
+                );
+              },
               onLongPress: _logout,
               child: Container(
                 width: 44,
