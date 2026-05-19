@@ -1,11 +1,11 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get_it/get_it.dart';
 import 'package:qurban_kit/core/services/api_client.dart';
-import 'package:qurban_kit/data/repository/auth_repository.dart';
-import 'package:qurban_kit/data/repository/mosque_repository.dart';
-import 'package:qurban_kit/data/sources/admin_mosque_data_source.dart';
-import 'package:qurban_kit/data/sources/auth_data_source.dart';
-import 'package:qurban_kit/data/sources/mosque_data_source.dart';
+import 'package:qurban_kit/features/auth/data/services/auth_repository.dart';
+import 'package:qurban_kit/features/mosque_registration/data/services/mosque_repository.dart';
+import 'package:qurban_kit/features/admin_dashboard/data/services/admin_mosque_data_source.dart';
+import 'package:qurban_kit/features/auth/data/services/auth_data_source.dart';
+import 'package:qurban_kit/features/mosque_registration/data/services/mosque_data_source.dart';
 
 final getIt = GetIt.instance;
 

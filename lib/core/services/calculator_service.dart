@@ -1,6 +1,6 @@
 // Service untuk logika kalkulator pembagian daging qurban
 
-import 'package:qurban_kit/data/models/calculator_models.dart';
+import 'package:qurban_kit/features/qurban_distribution/data/models/calculator_models.dart';
 
 class CalculatorService {
   // Template definitions
