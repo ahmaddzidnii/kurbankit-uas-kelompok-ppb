@@ -6,8 +6,6 @@ import 'package:qurban_kit/core/services/user_role_service.dart';
 import 'package:qurban_kit/features/admin_dashboard/data/models/admin_mosque_record.dart';
 import 'package:qurban_kit/features/auth/data/services/auth_repository.dart';
 import 'package:qurban_kit/features/admin_dashboard/data/services/admin_mosque_data_source.dart';
-import 'package:qurban_kit/features/admin_dashboard/presentation/screens/mosque_detail_page.dart';
-import 'package:qurban_kit/features/admin_dashboard/presentation/screens/verification_detail_page.dart';
 
 class VerificationListPage extends StatefulWidget {
   const VerificationListPage({super.key});
@@ -67,19 +65,37 @@ class _VerificationListPageState extends State<VerificationListPage> {
       ),
       body: IndexedStack(index: _selectedIndex, children: _pages),
       bottomNavigationBar: NavigationBar(
+        // --- Pengaturan Style ---
+        height: 65, // Mengatur tinggi navbar agar lebih proporsional
+        elevation: 3, // Menambahkan sedikit bayangan (shadow)
+        backgroundColor: Colors.white, // Warna latar belakang navbar
+        indicatorColor: Colors
+            .green
+            .shade100, // Warna sorotan (kapsul) di belakang ikon yang dipilih
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+        animationDuration: const Duration(
+          milliseconds: 300,
+        ), // Kecepatan animasi transisi
+        // ------------------------
         selectedIndex: _selectedIndex,
         onDestinationSelected: (index) {
           setState(() => _selectedIndex = index);
         },
         destinations: const [
           NavigationDestination(
-            icon: Icon(Icons.fact_check_outlined),
-            selectedIcon: Icon(Icons.fact_check),
+            icon: Icon(
+              Icons.fact_check_outlined,
+              color: Colors.black54,
+            ), // Warna ikon saat tidak dipilih
+            selectedIcon: Icon(
+              Icons.fact_check,
+              color: Colors.green,
+            ), // Warna ikon saat dipilih
             label: 'Permintaan',
           ),
           NavigationDestination(
-            icon: Icon(Icons.mosque_outlined),
-            selectedIcon: Icon(Icons.mosque),
+            icon: Icon(Icons.mosque_outlined, color: Colors.black54),
+            selectedIcon: Icon(Icons.mosque, color: Colors.green),
             label: 'Daftar Masjid',
           ),
         ],
