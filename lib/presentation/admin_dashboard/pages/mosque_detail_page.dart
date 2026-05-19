@@ -6,16 +6,16 @@ import 'package:qurban_kit/data/models/admin_mosque_record.dart';
 import 'package:qurban_kit/data/repository/auth_repository.dart';
 import 'package:qurban_kit/data/sources/admin_mosque_data_source.dart';
 
-class VerificationDetailPage extends StatefulWidget {
-  final AdminMosqueRecord? request;
+class MosqueDetailPage extends StatefulWidget {
+  final AdminMosqueRecord? mosque;
 
-  const VerificationDetailPage({super.key, this.request});
+  const MosqueDetailPage({super.key, this.mosque});
 
   @override
-  State<VerificationDetailPage> createState() => _VerificationDetailPageState();
+  State<MosqueDetailPage> createState() => _MosqueDetailPageState();
 }
 
-class _VerificationDetailPageState extends State<VerificationDetailPage> {
+class _MosqueDetailPageState extends State<MosqueDetailPage> {
   bool _isLoading = false;
 
   void _handleLogout() {
@@ -52,6 +52,21 @@ class _VerificationDetailPageState extends State<VerificationDetailPage> {
     );
   }
 
+  Color _statusColor(String status) {
+    switch (status.toUpperCase()) {
+      case 'ACTIVE':
+        return Colors.green;
+      case 'BLOCKED':
+      case 'BLOKIR':
+      case 'TAKEDOWN':
+        return Colors.red;
+      case 'PENDING':
+        return Colors.orange;
+      default:
+        return AppColors.textSubdued;
+    }
+  }
+
   String _formatDate(DateTime? date) {
     if (date == null) {
       return '-';
@@ -76,57 +91,9 @@ class _VerificationDetailPageState extends State<VerificationDetailPage> {
     return '$day ${months[date.month - 1]} ${date.year}';
   }
 
-  Color _statusColor(String status) {
-    switch (status.toUpperCase()) {
-      case 'PENDING':
-        return Colors.orange;
-      case 'APPROVED':
-      case 'ACTIVE':
-        return Colors.green;
-      case 'REJECTED':
-      case 'BLOCKED':
-      case 'BLOKIR':
-        return Colors.red;
-      default:
-        return AppColors.textSubdued;
-    }
-  }
-
-  Future<void> _approveRegistration() async {
-    final request = widget.request;
-    if (request == null) {
-      return;
-    }
-
-    setState(() => _isLoading = true);
-    try {
-      await getIt<AdminMosqueDataSource>().approveRegistration(request.id);
-      if (!mounted) {
-        return;
-      }
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Permintaan berhasil diverifikasi')),
-      );
-      Navigator.pop(context, true);
-    } catch (e) {
-      if (!mounted) {
-        return;
-      }
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal menyetujui permintaan: $e')),
-      );
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
-  }
-
-  Future<void> _rejectRegistration() async {
-    final request = widget.request;
-    if (request == null) {
+  Future<void> _blockMosque() async {
+    final mosque = widget.mosque;
+    if (mosque == null) {
       return;
     }
 
@@ -135,13 +102,21 @@ class _VerificationDetailPageState extends State<VerificationDetailPage> {
     await showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Tolak Permintaan'),
+        title: const Text('Blokir Masjid'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Text(
+              'Masjid ${mosque.nama} akan diblokir.',
+              style: const TextStyle(
+                fontSize: AppTypography.bodyMedium,
+                color: AppColors.textSubdued,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
             const Text(
-              'Alasan penolakan',
+              'Alasan blokir',
               style: TextStyle(
                 fontSize: AppTypography.bodyMedium,
                 fontWeight: AppTypography.medium,
@@ -153,7 +128,7 @@ class _VerificationDetailPageState extends State<VerificationDetailPage> {
               controller: reasonController,
               maxLines: 3,
               decoration: const InputDecoration(
-                hintText: 'Masukkan alasan penolakan',
+                hintText: 'Masukkan alasan blokir',
               ),
             ),
           ],
@@ -168,8 +143,8 @@ class _VerificationDetailPageState extends State<VerificationDetailPage> {
               Navigator.pop(dialogContext);
               setState(() => _isLoading = true);
               try {
-                await getIt<AdminMosqueDataSource>().rejectRegistration(
-                  request.id,
+                await getIt<AdminMosqueDataSource>().blockMosque(
+                  mosque.id,
                   reason: reasonController.text.trim(),
                 );
                 if (!mounted) {
@@ -177,7 +152,7 @@ class _VerificationDetailPageState extends State<VerificationDetailPage> {
                 }
 
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Permintaan berhasil ditolak')),
+                  const SnackBar(content: Text('Masjid berhasil diblokir')),
                 );
                 Navigator.pop(context, true);
               } catch (e) {
@@ -186,7 +161,7 @@ class _VerificationDetailPageState extends State<VerificationDetailPage> {
                 }
 
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Gagal menolak permintaan: $e')),
+                  SnackBar(content: Text('Gagal memblokir masjid: $e')),
                 );
               } finally {
                 if (mounted) {
@@ -194,58 +169,21 @@ class _VerificationDetailPageState extends State<VerificationDetailPage> {
                 }
               }
             },
-            child: const Text('Tolak', style: TextStyle(color: Colors.red)),
+            child: const Text('Blokir', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildImageBox(String? url, String fallbackLabel) {
-    final hasImage = url != null && url.isNotEmpty;
+  Future<void> _unblockMosque() async {
+    if (!mounted) {
+      return;
+    }
 
-    return Container(
-      height: 180,
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: AppColors.backgroundHighlight,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.backgroundElevatedHighlight),
-      ),
-      child: hasImage
-          ? ClipRRect(
-              borderRadius: BorderRadius.circular(AppRadius.md),
-              child: Image.network(
-                url,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return _fallbackBox(fallbackLabel);
-                },
-              ),
-            )
-          : _fallbackBox(fallbackLabel),
-    );
-  }
-
-  Widget _fallbackBox(String label) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.image_not_supported_outlined,
-            size: 48,
-            color: AppColors.textSubdued.withOpacity(0.5),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: AppTypography.bodyMedium,
-              color: AppColors.textSubdued,
-            ),
-          ),
-        ],
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Endpoint buka blokir belum tersedia di backend.'),
       ),
     );
   }
@@ -279,17 +217,66 @@ class _VerificationDetailPageState extends State<VerificationDetailPage> {
     );
   }
 
+  Widget _buildImageBox(String? url) {
+    final hasImage = url != null && url.isNotEmpty;
+
+    return Container(
+      height: 210,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: AppColors.backgroundHighlight,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.backgroundElevatedHighlight),
+      ),
+      child: hasImage
+          ? ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              child: Image.network(
+                url,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return _fallbackBox();
+                },
+              ),
+            )
+          : _fallbackBox(),
+    );
+  }
+
+  Widget _fallbackBox() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.image_not_supported_outlined,
+            size: 48,
+            color: AppColors.textSubdued.withOpacity(0.5),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          const Text(
+            'Foto masjid tidak tersedia',
+            style: TextStyle(
+              fontSize: AppTypography.bodyMedium,
+              color: AppColors.textSubdued,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final request = widget.request;
-    if (request == null) {
+    final mosque = widget.mosque;
+    if (mosque == null) {
       return Scaffold(
         appBar: AppBar(
           backgroundColor: AppColors.essentialBrightAccent,
           foregroundColor: Colors.white,
-          title: const Text('Detail Permintaan'),
+          title: const Text('Detail Masjid'),
         ),
-        body: const Center(child: Text('Data permintaan tidak ditemukan')),
+        body: const Center(child: Text('Data masjid tidak ditemukan')),
       );
     }
 
@@ -297,7 +284,7 @@ class _VerificationDetailPageState extends State<VerificationDetailPage> {
       appBar: AppBar(
         backgroundColor: AppColors.essentialBrightAccent,
         foregroundColor: Colors.white,
-        title: const Text('Detail Permintaan'),
+        title: const Text('Detail Masjid'),
         elevation: 0,
         actions: [
           IconButton(icon: const Icon(Icons.logout), onPressed: _handleLogout),
@@ -313,12 +300,12 @@ class _VerificationDetailPageState extends State<VerificationDetailPage> {
               children: [
                 CircleAvatar(
                   radius: 28,
-                  backgroundColor: AppColors.essentialBrightAccent.withOpacity(
+                  backgroundColor: AppColors.essentialAnnouncement.withOpacity(
                     0.14,
                   ),
                   child: const Icon(
                     Icons.mosque,
-                    color: AppColors.essentialBrightAccent,
+                    color: AppColors.essentialAnnouncement,
                   ),
                 ),
                 const SizedBox(width: AppSpacing.md),
@@ -327,7 +314,7 @@ class _VerificationDetailPageState extends State<VerificationDetailPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        request.nama,
+                        mosque.nama,
                         style: const TextStyle(
                           fontSize: AppTypography.headingMedium,
                           fontWeight: AppTypography.semiBold,
@@ -336,9 +323,7 @@ class _VerificationDetailPageState extends State<VerificationDetailPage> {
                       ),
                       const SizedBox(height: AppSpacing.xs),
                       Text(
-                        request.namaPengaju?.isNotEmpty == true
-                            ? request.namaPengaju!
-                            : 'Nama pengaju belum tersedia',
+                        mosque.alamat,
                         style: const TextStyle(
                           fontSize: AppTypography.bodyMedium,
                           color: AppColors.textSubdued,
@@ -351,13 +336,13 @@ class _VerificationDetailPageState extends State<VerificationDetailPage> {
                           vertical: AppSpacing.xs,
                         ),
                         decoration: BoxDecoration(
-                          color: _statusColor(request.status).withOpacity(0.12),
+                          color: _statusColor(mosque.status).withOpacity(0.12),
                           borderRadius: BorderRadius.circular(AppRadius.xs),
                         ),
                         child: Text(
-                          request.status,
+                          mosque.status,
                           style: TextStyle(
-                            color: _statusColor(request.status),
+                            color: _statusColor(mosque.status),
                             fontWeight: AppTypography.medium,
                           ),
                         ),
@@ -368,80 +353,40 @@ class _VerificationDetailPageState extends State<VerificationDetailPage> {
               ],
             ),
             const SizedBox(height: AppSpacing.lg),
-            _buildImageBox(
-              request.gambarMasjidUrl,
-              'Foto masjid belum tersedia',
-            ),
+            _buildImageBox(mosque.gambarMasjidUrl),
             const SizedBox(height: AppSpacing.lg),
-            _buildField('Nama Masjid', request.nama),
+            _buildField('Nama Masjid', mosque.nama),
             const SizedBox(height: AppSpacing.md),
-            _buildField('Nama Pengaju', request.namaPengaju ?? '-'),
+            _buildField('Nomor SK', mosque.nomorSK ?? '-'),
             const SizedBox(height: AppSpacing.md),
-            _buildField('Nomor SK', request.nomorSK ?? '-'),
-            const SizedBox(height: AppSpacing.md),
-            _buildField('Alamat', request.alamat, maxLines: 2),
+            _buildField('Alamat', mosque.alamat, maxLines: 2),
             const SizedBox(height: AppSpacing.md),
             _buildField(
               'Wilayah',
-              request.detailWilayah.formattedAddress.isNotEmpty
-                  ? request.detailWilayah.formattedAddress
+              mosque.detailWilayah.formattedAddress.isNotEmpty
+                  ? mosque.detailWilayah.formattedAddress
                   : '-',
               maxLines: 2,
             ),
             const SizedBox(height: AppSpacing.md),
-            _buildField('Tanggal Pengajuan', _formatDate(request.createdAt)),
-            const SizedBox(height: AppSpacing.lg),
-            const Text(
-              'Dokumen Pendukung',
-              style: TextStyle(
-                fontSize: AppTypography.bodyLarge,
-                fontWeight: AppTypography.semiBold,
-                color: AppColors.textBase,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            _buildImageBox(
-              request.dokumenSKUrl,
-              'Dokumen verifikasi belum tersedia',
-            ),
+            _buildField('Tanggal Daftar', _formatDate(mosque.createdAt)),
             const SizedBox(height: AppSpacing.lg),
             Row(
               children: [
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: _isLoading ? null : _approveRegistration,
+                    onPressed: _isLoading || mosque.isBlocked
+                        ? _unblockMosque
+                        : _blockMosque,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.essentialBrightAccent,
+                      backgroundColor: mosque.isBlocked
+                          ? Colors.green
+                          : Colors.red,
                       minimumSize: const Size(double.infinity, 48),
                     ),
-                    child: _isLoading
-                        ? const SizedBox(
-                            height: 22,
-                            width: 22,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                Colors.white,
-                              ),
-                            ),
-                          )
-                        : const Text(
-                            'Verifikasi',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: _isLoading ? null : _rejectRegistration,
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Colors.red),
-                      minimumSize: const Size(double.infinity, 48),
-                    ),
-                    child: const Text(
-                      'Tolak',
-                      style: TextStyle(color: Colors.red),
+                    child: Text(
+                      mosque.isBlocked ? 'Buka Blokir' : 'Blokir Masjid',
+                      style: const TextStyle(color: Colors.white),
                     ),
                   ),
                 ),

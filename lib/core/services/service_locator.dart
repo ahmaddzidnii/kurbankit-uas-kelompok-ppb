@@ -3,6 +3,7 @@ import 'package:get_it/get_it.dart';
 import 'package:qurban_kit/core/services/api_client.dart';
 import 'package:qurban_kit/data/repository/auth_repository.dart';
 import 'package:qurban_kit/data/repository/mosque_repository.dart';
+import 'package:qurban_kit/data/sources/admin_mosque_data_source.dart';
 import 'package:qurban_kit/data/sources/auth_data_source.dart';
 import 'package:qurban_kit/data/sources/mosque_data_source.dart';
 
@@ -20,6 +21,10 @@ void setupServiceLocator() {
 
   getIt.registerSingleton<MosqueDataSource>(
     MosqueDataSourceImpl(getIt<ApiClient>()),
+  );
+
+  getIt.registerSingleton<AdminMosqueDataSource>(
+    AdminMosqueDataSourceImpl(getIt<ApiClient>()),
   );
 
   // Repositories
@@ -40,3 +45,5 @@ void setupServiceLocator() {
 AuthRepository get authRepository => getIt<AuthRepository>();
 MosqueRepository get mosqueRepository => getIt<MosqueRepository>();
 ApiClient get apiClient => getIt<ApiClient>();
+AdminMosqueDataSource get adminMosqueDataSource =>
+    getIt<AdminMosqueDataSource>();

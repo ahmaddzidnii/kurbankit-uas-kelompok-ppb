@@ -11,7 +11,9 @@ import 'package:qurban_kit/presentation/mosque_dashboard/pages/settings/mosque_s
 import 'package:qurban_kit/presentation/mosque_dashboard/pages/profile/mosque_profile_page.dart';
 import 'package:qurban_kit/presentation/admin_dashboard/pages/verification_list_page.dart';
 import 'package:qurban_kit/presentation/admin_dashboard/pages/verification_detail_page.dart';
+import 'package:qurban_kit/presentation/admin_dashboard/pages/mosque_detail_page.dart';
 import 'package:qurban_kit/presentation/admin_dashboard/pages/takedown_page.dart';
+import 'package:qurban_kit/data/models/admin_mosque_record.dart';
 import 'package:qurban_kit/data/models/calculator_models.dart';
 import 'package:qurban_kit/data/models/auth_models.dart';
 import 'core/configs/theme/app_theme.dart';
@@ -102,8 +104,15 @@ class MainApp extends StatelessWidget {
               settings: settings,
             );
           case '/admin-detail':
+            final request = settings.arguments as AdminMosqueRecord?;
             return MaterialPageRoute(
-              builder: (context) => const VerificationDetailPage(),
+              builder: (context) => VerificationDetailPage(request: request),
+              settings: settings,
+            );
+          case '/admin-mosque-detail':
+            final mosque = settings.arguments as AdminMosqueRecord?;
+            return MaterialPageRoute(
+              builder: (context) => MosqueDetailPage(mosque: mosque),
               settings: settings,
             );
           case '/admin-takedown':
