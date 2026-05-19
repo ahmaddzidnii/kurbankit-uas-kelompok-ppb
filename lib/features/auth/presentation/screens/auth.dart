@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:qurban_kit/core/configs/exceptions.dart';
 import 'package:qurban_kit/core/configs/theme/theme.dart';
 import 'package:qurban_kit/core/services/onboarding_service.dart';
@@ -63,14 +64,14 @@ class _AuthPageState extends State<AuthPage> {
       if (!mounted) return;
 
       if (userRole == 'SUPER_ADMIN') {
-        Navigator.pushReplacementNamed(context, '/admin-dashboard');
+        context.go('/admin-dashboard');
       } else if (userRole == 'ADMIN_MASJID') {
         // Admin Masjid goes directly to dashboard
         // They can register mosque via the quick action button
-        Navigator.pushReplacementNamed(context, '/mosque-admin-dashboard');
+        context.go('/mosque-admin-dashboard');
       } else {
         // Default to home for other roles
-        Navigator.pushReplacementNamed(context, '/home');
+        context.go('/home');
       }
     } on UnauthorizedException {
       setState(() => _errorMessage = 'Email atau password salah');
@@ -410,13 +411,7 @@ class _AuthPageState extends State<AuthPage> {
                           onPressed: _isLoading
                               ? null
                               : () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          const RegisterPage(),
-                                    ),
-                                  );
+                                  context.push('/register');
                                 },
                           style: TextButton.styleFrom(
                             padding: const EdgeInsets.symmetric(horizontal: 4),

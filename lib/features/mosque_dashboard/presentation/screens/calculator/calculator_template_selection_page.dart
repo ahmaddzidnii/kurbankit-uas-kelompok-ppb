@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:qurban_kit/core/configs/theme/theme.dart';
 import 'package:qurban_kit/core/services/calculator_service.dart';
 
@@ -21,7 +22,7 @@ class _CalculatorTemplateSelectionPageState
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.textBase),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => context.pop(),
         ),
         title: const Text(
           'Pilih Template Pembagian',
@@ -71,11 +72,7 @@ class _CalculatorTemplateSelectionPageState
                   children: [
                     GestureDetector(
                       onTap: () {
-                        Navigator.pushNamed(
-                          context,
-                          '/calculator-input',
-                          arguments: template.id,
-                        );
+                        context.push('/calculator-input/${template.id}');
                       },
                       child: Container(
                         padding: const EdgeInsets.all(AppSpacing.lg),

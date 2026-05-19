@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:qurban_kit/core/configs/theme/theme.dart';
 import 'package:qurban_kit/core/services/service_locator.dart';
 import 'package:qurban_kit/core/services/user_role_service.dart';
@@ -50,7 +51,7 @@ class _MosqueAdminDashboardState extends State<MosqueAdminDashboard> {
     await UserRoleService.clearUserRoleData();
 
     if (mounted) {
-      Navigator.pushReplacementNamed(context, '/auth');
+      context.go('/auth');
     }
   }
 

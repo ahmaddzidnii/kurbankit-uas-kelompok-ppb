@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:qurban_kit/core/configs/theme/theme.dart';
 import 'package:qurban_kit/core/services/service_locator.dart';
 import 'package:qurban_kit/core/services/user_role_service.dart';
@@ -30,7 +31,7 @@ class _VerificationListPageState extends State<VerificationListPage> {
         content: const Text('Apakah Anda yakin ingin logout?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => context.pop(),
             child: const Text('Batal'),
           ),
           TextButton(
@@ -43,11 +44,7 @@ class _VerificationListPageState extends State<VerificationListPage> {
                 return;
               }
 
-              Navigator.pushNamedAndRemoveUntil(
-                context,
-                '/auth',
-                (route) => false,
-              );
+              context.go('/auth');
             },
             child: const Text('Logout', style: TextStyle(color: Colors.red)),
           ),

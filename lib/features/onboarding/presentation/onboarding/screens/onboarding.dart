@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:qurban_kit/core/configs/theme/theme.dart';
 import 'package:qurban_kit/core/services/onboarding_service.dart';
-import 'package:qurban_kit/features/auth/presentation/auth/screens/auth.dart';
 
 class OnboardingPage extends StatefulWidget {
   const OnboardingPage({super.key});
@@ -72,10 +72,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
     if (!mounted) return;
 
     // Navigate to auth page
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const AuthPage()),
-    );
+    context.go('/auth');
   }
 
   @override

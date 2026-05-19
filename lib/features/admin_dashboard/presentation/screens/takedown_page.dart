@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:qurban_kit/core/configs/theme/theme.dart';
 import 'package:qurban_kit/core/services/user_role_service.dart';
 import 'package:qurban_kit/features/auth/data/services/auth_repository.dart';
@@ -25,7 +26,7 @@ class _TakedownPageState extends State<TakedownPage>
         content: const Text('Apakah Anda yakin ingin logout?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => context.pop(),
             child: const Text('Batal'),
           ),
           TextButton(
@@ -35,11 +36,7 @@ class _TakedownPageState extends State<TakedownPage>
               await UserRoleService.clearUserRoleData();
 
               if (mounted) {
-                Navigator.pushNamedAndRemoveUntil(
-                  context,
-                  '/auth',
-                  (route) => false,
-                );
+                context.go('/auth');
               }
             },
             child: const Text('Logout', style: TextStyle(color: Colors.red)),
@@ -154,13 +151,13 @@ class _TakedownPageState extends State<TakedownPage>
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => context.pop(),
             child: const Text('Batal'),
           ),
           TextButton(
             onPressed: () {
               // TODO: Call API to takedown
-              Navigator.pop(context);
+              context.pop();
               _reasonController.clear();
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Takedown berhasil dilakukan')),

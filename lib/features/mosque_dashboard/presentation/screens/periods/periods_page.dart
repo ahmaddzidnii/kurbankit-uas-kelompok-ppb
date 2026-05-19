@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:qurban_kit/core/configs/theme/theme.dart';
 
 class PeriodsPage extends StatefulWidget {
@@ -268,7 +269,7 @@ class _PeriodsPageState extends State<PeriodsPage> {
                     ),
                   ),
                   GestureDetector(
-                    onTap: () => Navigator.pop(context),
+                    onTap: () => context.pop(),
                     child: Icon(Icons.close_rounded, color: AppColors.textBase),
                   ),
                 ],
@@ -290,7 +291,7 @@ class _PeriodsPageState extends State<PeriodsPage> {
                     ),
                   ),
                   onPressed: () {
-                    Navigator.pop(context);
+                    context.pop();
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text('View Details - Coming Soon'),

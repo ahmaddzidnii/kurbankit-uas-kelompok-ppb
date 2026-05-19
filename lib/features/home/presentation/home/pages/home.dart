@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:qurban_kit/core/configs/exceptions.dart';
 import 'package:qurban_kit/core/configs/theme/theme.dart';
 import 'package:qurban_kit/core/services/onboarding_service.dart';
@@ -58,7 +59,7 @@ class _HomePageState extends State<HomePage> {
         ),
       );
 
-      Navigator.pushReplacementNamed(context, '/auth');
+      context.go('/auth');
     }
   }
 
@@ -97,11 +98,11 @@ class _HomePageState extends State<HomePage> {
         content: const Text('Apakah Anda yakin ingin keluar?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context, false),
+            onPressed: () => context.pop(false),
             child: const Text('Batal'),
           ),
           TextButton(
-            onPressed: () => Navigator.pop(context, true),
+            onPressed: () => context.pop(true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: const Text('Logout'),
           ),
@@ -127,7 +128,7 @@ class _HomePageState extends State<HomePage> {
 
       // Navigate to auth page
       if (mounted) {
-        Navigator.pushReplacementNamed(context, '/auth');
+        context.go('/auth');
       }
     } on UnauthorizedException {
       // Token already invalid, just clear and redirect
@@ -140,7 +141,7 @@ class _HomePageState extends State<HomePage> {
             content: Text('Sesi berakhir. Silakan login kembali.'),
           ),
         );
-        Navigator.pushReplacementNamed(context, '/auth');
+        context.go('/auth');
       }
     } on AppException catch (e) {
       setState(() => _errorMessage = e.message);

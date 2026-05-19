@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:qurban_kit/core/configs/theme/theme.dart';
 import 'package:qurban_kit/core/services/service_locator.dart';
 import 'package:qurban_kit/core/services/user_role_service.dart';
@@ -26,11 +27,11 @@ class _MosqueSettingsPageState extends State<MosqueSettingsPage> {
         content: const Text('Apakah Anda yakin ingin keluar?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context, false),
+            onPressed: () => context.pop(false),
             child: const Text('Batal'),
           ),
           TextButton(
-            onPressed: () => Navigator.pop(context, true),
+            onPressed: () => context.pop(true),
             child: const Text('Keluar', style: TextStyle(color: Colors.red)),
           ),
         ],
@@ -41,7 +42,7 @@ class _MosqueSettingsPageState extends State<MosqueSettingsPage> {
       await authRepository.logout();
       await UserRoleService.clearUserRoleData();
       if (!mounted) return;
-      Navigator.pushNamedAndRemoveUntil(context, '/auth', (route) => false);
+      context.go('/auth');
     }
   }
 
@@ -74,11 +75,7 @@ class _MosqueSettingsPageState extends State<MosqueSettingsPage> {
                     icon: Icons.person_outline_rounded,
                     title: 'Edit Profile',
                     onTap: () {
-                      Navigator.pushNamed(
-                        context,
-                        '/mosque-profile',
-                        arguments: widget.user,
-                      );
+                      context.push('/mosque-profile', extra: widget.user);
                     },
                   ),
                   const Divider(height: 1),

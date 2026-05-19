@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:qurban_kit/core/configs/theme/theme.dart';
 import 'package:qurban_kit/core/services/service_locator.dart';
 import 'package:qurban_kit/core/services/user_role_service.dart';
@@ -21,7 +22,7 @@ class _MosqueWaitingDashboardState extends State<MosqueWaitingDashboard> {
         content: const Text('Apakah Anda yakin ingin keluar?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => context.pop(),
             child: const Text('Batal'),
           ),
           TextButton(
@@ -29,11 +30,7 @@ class _MosqueWaitingDashboardState extends State<MosqueWaitingDashboard> {
               await authRepository.logout();
               await UserRoleService.clearUserRoleData();
               if (mounted) {
-                Navigator.pushNamedAndRemoveUntil(
-                  context,
-                  '/auth',
-                  (route) => false,
-                );
+                context.go('/auth');
               }
             },
             child: const Text('Keluar', style: TextStyle(color: Colors.red)),

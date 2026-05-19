@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:qurban_kit/core/configs/theme/theme.dart';
 
 class RecipientsPage extends StatefulWidget {
@@ -126,7 +127,7 @@ class _RecipientsPageState extends State<RecipientsPage> {
       floatingActionButton: FloatingActionButton(
         backgroundColor: AppColors.essentialBrightAccent,
         onPressed: () {
-          Navigator.pushNamed(context, '/mosque-recipient-form');
+          context.push('/mosque-recipient-form');
         },
         child: const Icon(Icons.add, color: Colors.white),
       ),
@@ -430,7 +431,7 @@ class _RecipientsPageState extends State<RecipientsPage> {
                     ),
                   ),
                   GestureDetector(
-                    onTap: () => Navigator.pop(context),
+                    onTap: () => context.pop(),
                     child: Icon(Icons.close_rounded, color: AppColors.textBase),
                   ),
                 ],
@@ -459,7 +460,7 @@ class _RecipientsPageState extends State<RecipientsPage> {
                           vertical: AppSpacing.md,
                         ),
                       ),
-                      onPressed: () => Navigator.pop(context),
+                      onPressed: () => context.pop(),
                       child: Text(
                         'Tutup',
                         style: TextStyle(
@@ -479,7 +480,7 @@ class _RecipientsPageState extends State<RecipientsPage> {
                         ),
                       ),
                       onPressed: () {
-                        Navigator.pop(context);
+                        context.pop();
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text('Edit - Coming Soon')),
                         );

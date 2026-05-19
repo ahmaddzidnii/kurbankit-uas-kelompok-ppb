@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:qurban_kit/core/configs/theme/theme.dart';
 import 'package:qurban_kit/core/services/service_locator.dart';
 import 'package:qurban_kit/core/services/user_role_service.dart';
@@ -31,11 +32,11 @@ class _AdminHomePageState extends State<AdminHomePage> {
         content: const Text('Apakah Anda yakin ingin keluar?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context, false),
+            onPressed: () => context.pop(false),
             child: const Text('Batal'),
           ),
           TextButton(
-            onPressed: () => Navigator.pop(context, true),
+            onPressed: () => context.pop(true),
             child: const Text('Keluar', style: TextStyle(color: Colors.red)),
           ),
         ],
@@ -46,7 +47,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
       if (mounted) {
         await authRepository.logout();
         await UserRoleService.clearUserRoleData();
-        Navigator.pushReplacementNamed(context, '/auth');
+        context.go('/auth');
       }
     }
   }
@@ -162,12 +163,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
             // Profile avatar
             GestureDetector(
               onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => MosqueProfilePage(user: _user),
-                  ),
-                );
+                context.push('/mosque-profile', extra: _user);
               },
               onLongPress: _logout,
               child: Container(
@@ -418,7 +414,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
                 icon: Icons.person_add_rounded,
                 label: 'Add Recipient',
                 onTap: () {
-                  Navigator.pushNamed(context, '/mosque-recipient-form');
+                  context.push('/mosque-recipient-form');
                 },
               ),
             ),
@@ -428,10 +424,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
                 icon: Icons.calculate_rounded,
                 label: 'Calculate Qurban',
                 onTap: () {
-                  Navigator.pushNamed(
-                    context,
-                    '/calculator-template-selection',
-                  );
+                  context.push('/calculator-template-selection');
                 },
               ),
             ),
@@ -441,7 +434,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
                 icon: Icons.add_location_rounded,
                 label: 'Register Mosque',
                 onTap: () {
-                  Navigator.pushNamed(context, '/mosque-registration');
+                  context.push('/mosque-registration');
                 },
               ),
             ),

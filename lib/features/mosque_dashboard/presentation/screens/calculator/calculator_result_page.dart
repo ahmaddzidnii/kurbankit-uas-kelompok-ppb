@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:qurban_kit/core/configs/theme/theme.dart';
 import 'package:qurban_kit/core/services/calculator_service.dart';
 import 'package:qurban_kit/features/qurban_distribution/data/models/calculator_models.dart';
@@ -37,7 +38,7 @@ class _CalculatorResultPageState extends State<CalculatorResultPage>
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.textBase),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => context.pop(),
         ),
         title: const Text(
           'Hasil Perhitungan',
@@ -264,8 +265,8 @@ class _CalculatorResultPageState extends State<CalculatorResultPage>
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Hasil telah disimpan')),
                 );
-                Navigator.pop(context);
-                Navigator.pop(context);
+                context.pop();
+                context.pop();
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.essentialBrightAccent,

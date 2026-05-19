@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:qurban_kit/core/configs/theme/theme.dart';
 import 'package:qurban_kit/core/services/service_locator.dart';
 import 'package:qurban_kit/core/services/user_role_service.dart';
@@ -34,7 +35,7 @@ class _RecipientFormPageState extends State<RecipientFormPage> {
     await authRepository.logout();
     await UserRoleService.clearUserRoleData();
     if (!mounted) return;
-    Navigator.pushNamedAndRemoveUntil(context, '/auth', (route) => false);
+    context.go('/auth');
   }
 
   Future<void> _saveRecipient() async {
@@ -58,7 +59,7 @@ class _RecipientFormPageState extends State<RecipientFormPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Data penerima berhasil disimpan')),
     );
-    Navigator.pop(context);
+    context.pop();
   }
 
   @override
@@ -70,7 +71,7 @@ class _RecipientFormPageState extends State<RecipientFormPage> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.textBase),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => context.pop(),
         ),
         title: const Text(
           'Add Family Member',

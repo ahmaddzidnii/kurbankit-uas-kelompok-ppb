@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:qurban_kit/core/configs/exceptions.dart';
 import 'package:qurban_kit/core/configs/theme/theme.dart';
 import 'package:qurban_kit/core/services/service_locator.dart';
@@ -83,7 +84,7 @@ class _RegisterPageState extends State<RegisterPage> {
         const SnackBar(content: Text('Registrasi berhasil! Silakan login.')),
       );
 
-      Navigator.pop(context);
+      context.pop();
     } on ValidationException catch (e) {
       if (e.errors != null) {
         setState(() => _fieldErrors = e.errors!.cast<String, String>());
@@ -114,7 +115,7 @@ class _RegisterPageState extends State<RegisterPage> {
         backgroundColor: Colors.transparent,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.textBase),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => context.pop(),
         ),
       ),
       body: SafeArea(
@@ -363,7 +364,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           onPressed: _isLoading
                               ? null
                               : () {
-                                  Navigator.pop(context);
+                                  context.pop();
                                 },
                           style: TextButton.styleFrom(
                             padding: const EdgeInsets.symmetric(horizontal: 4),

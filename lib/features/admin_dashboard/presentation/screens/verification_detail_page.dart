@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:qurban_kit/core/configs/theme/theme.dart';
 import 'package:qurban_kit/core/services/service_locator.dart';
 import 'package:qurban_kit/core/services/user_role_service.dart';
@@ -26,7 +27,7 @@ class _VerificationDetailPageState extends State<VerificationDetailPage> {
         content: const Text('Apakah Anda yakin ingin logout?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => context.pop(),
             child: const Text('Batal'),
           ),
           TextButton(
@@ -39,11 +40,7 @@ class _VerificationDetailPageState extends State<VerificationDetailPage> {
                 return;
               }
 
-              Navigator.pushNamedAndRemoveUntil(
-                context,
-                '/auth',
-                (route) => false,
-              );
+              context.go('/auth');
             },
             child: const Text('Logout', style: TextStyle(color: Colors.red)),
           ),
@@ -108,7 +105,7 @@ class _VerificationDetailPageState extends State<VerificationDetailPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Permintaan berhasil diverifikasi')),
       );
-      Navigator.pop(context, true);
+      context.pop(true);
     } catch (e) {
       if (!mounted) {
         return;
@@ -160,12 +157,12 @@ class _VerificationDetailPageState extends State<VerificationDetailPage> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
+            onPressed: () => dialogContext.pop(),
             child: const Text('Batal'),
           ),
           TextButton(
             onPressed: () async {
-              Navigator.pop(dialogContext);
+              dialogContext.pop();
               setState(() => _isLoading = true);
               try {
                 await getIt<AdminMosqueDataSource>().rejectRegistration(
@@ -179,7 +176,7 @@ class _VerificationDetailPageState extends State<VerificationDetailPage> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Permintaan berhasil ditolak')),
                 );
-                Navigator.pop(context, true);
+                context.pop(true);
               } catch (e) {
                 if (!mounted) {
                   return;

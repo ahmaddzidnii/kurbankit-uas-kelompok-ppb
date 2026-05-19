@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:qurban_kit/core/configs/theme/theme.dart';
 import 'package:qurban_kit/core/services/service_locator.dart';
 import 'package:qurban_kit/core/services/user_role_service.dart';
@@ -17,11 +18,11 @@ class MosqueProfilePage extends StatelessWidget {
         content: const Text('Apakah Anda yakin ingin keluar?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context, false),
+            onPressed: () => context.pop(false),
             child: const Text('Batal'),
           ),
           TextButton(
-            onPressed: () => Navigator.pop(context, true),
+            onPressed: () => context.pop(true),
             child: const Text('Keluar', style: TextStyle(color: Colors.red)),
           ),
         ],
@@ -32,7 +33,7 @@ class MosqueProfilePage extends StatelessWidget {
       await authRepository.logout();
       await UserRoleService.clearUserRoleData();
       if (context.mounted) {
-        Navigator.pushNamedAndRemoveUntil(context, '/auth', (route) => false);
+        context.go('/auth');
       }
     }
   }
@@ -50,7 +51,7 @@ class MosqueProfilePage extends StatelessWidget {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.textBase),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => context.pop(),
         ),
         title: const Text(
           'QurbanKit',

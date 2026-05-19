@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:qurban_kit/core/configs/theme/theme.dart';
 import 'package:qurban_kit/core/services/service_locator.dart';
 import 'package:qurban_kit/core/services/user_role_service.dart';
@@ -93,7 +94,7 @@ class _MosqueRegistrationPageState extends State<MosqueRegistrationPage> {
         content: const Text('Apakah Anda yakin ingin logout?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => context.pop(),
             child: const Text('Batal'),
           ),
           TextButton(
@@ -103,11 +104,7 @@ class _MosqueRegistrationPageState extends State<MosqueRegistrationPage> {
               await UserRoleService.clearUserRoleData();
 
               if (mounted) {
-                Navigator.pushNamedAndRemoveUntil(
-                  context,
-                  '/auth',
-                  (route) => false,
-                );
+                context.go('/auth');
               }
             },
             child: const Text('Logout', style: TextStyle(color: Colors.red)),
@@ -133,7 +130,7 @@ class _MosqueRegistrationPageState extends State<MosqueRegistrationPage> {
         // Navigate to admin dashboard
         Future.delayed(const Duration(milliseconds: 500), () {
           if (mounted) {
-            Navigator.pushReplacementNamed(context, '/mosque-admin-dashboard');
+            context.go('/mosque-admin-dashboard');
           }
         });
       }
@@ -206,12 +203,9 @@ class _MosqueRegistrationPageState extends State<MosqueRegistrationPage> {
                 // Close button
                 ElevatedButton(
                   onPressed: () {
-                    Navigator.pop(context);
+                    context.pop();
                     // TODO: Navigate to mosque dashboard waiting
-                    Navigator.pushReplacementNamed(
-                      context,
-                      '/mosque-dashboard-waiting',
-                    );
+                    context.go('/mosque-dashboard-waiting');
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.essentialBrightAccent,

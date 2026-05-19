@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:qurban_kit/core/configs/theme/theme.dart';
 import 'package:qurban_kit/core/services/service_locator.dart';
 import 'package:qurban_kit/core/services/user_role_service.dart';
@@ -30,7 +31,7 @@ class _VerificationListPageState extends State<VerificationListPage> {
         content: const Text('Apakah Anda yakin ingin logout?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => context.pop(),
             child: const Text('Batal'),
           ),
           TextButton(
@@ -43,11 +44,7 @@ class _VerificationListPageState extends State<VerificationListPage> {
                 return;
               }
 
-              Navigator.pushNamedAndRemoveUntil(
-                context,
-                '/auth',
-                (route) => false,
-              );
+              context.go('/auth');
             },
             child: const Text('Logout', style: TextStyle(color: Colors.red)),
           ),
@@ -190,12 +187,7 @@ class _RequestListTabState extends State<_RequestListTab> {
   Widget _buildCard(AdminMosqueRecord item) {
     return InkWell(
       onTap: () async {
-        final updated = await Navigator.push<bool>(
-          context,
-          MaterialPageRoute(
-            builder: (_) => VerificationDetailPage(request: item),
-          ),
-        );
+        final updated = await context.push<bool>('/admin-detail', extra: item);
 
         if (updated == true && mounted) {
           await _reload();
@@ -468,9 +460,9 @@ class _MosqueListTabState extends State<_MosqueListTab> {
   Widget _buildCard(AdminMosqueRecord item) {
     return InkWell(
       onTap: () async {
-        final updated = await Navigator.push<bool>(
-          context,
-          MaterialPageRoute(builder: (_) => MosqueDetailPage(mosque: item)),
+        final updated = await context.push<bool>(
+          '/admin-mosque-detail',
+          extra: item,
         );
 
         if (updated == true && mounted) {

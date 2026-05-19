@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:qurban_kit/core/configs/theme/theme.dart';
 import 'package:qurban_kit/core/services/calculator_service.dart';
 import 'package:qurban_kit/features/qurban_distribution/data/models/calculator_models.dart';
@@ -82,7 +83,7 @@ class _CalculatorInputPageState extends State<CalculatorInputPage>
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => context.pop(),
               child: const Text('Batal'),
             ),
             TextButton(
@@ -104,7 +105,7 @@ class _CalculatorInputPageState extends State<CalculatorInputPage>
                     percentageControllers[newCategory.name] =
                         TextEditingController();
                   });
-                  Navigator.pop(context);
+                  context.pop();
                 }
               },
               child: const Text('Tambah'),
@@ -148,7 +149,7 @@ class _CalculatorInputPageState extends State<CalculatorInputPage>
         customPercentages: customPercentages,
       );
 
-      Navigator.pushNamed(context, '/calculator-result', arguments: result);
+      context.push('/calculator-result', extra: result);
     } catch (e) {
       ScaffoldMessenger.of(
         context,
@@ -167,7 +168,7 @@ class _CalculatorInputPageState extends State<CalculatorInputPage>
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.textBase),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => context.pop(),
         ),
         title: Text(
           template?.name ?? 'Calculator',

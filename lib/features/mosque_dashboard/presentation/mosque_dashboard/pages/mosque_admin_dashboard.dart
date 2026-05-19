@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:qurban_kit/core/configs/theme/theme.dart';
 import 'package:qurban_kit/core/services/service_locator.dart';
 import 'package:qurban_kit/core/services/user_role_service.dart';
 import 'package:qurban_kit/features/auth/data/models/auth_models.dart';
 import 'dashboard/admin_home_page.dart';
-import 'periods/periods_page.dart';
-import 'recipients/recipients_page.dart';
+import 'package:qurban_kit/features/mosque_dashboard/presentation/screens/periods/periods_page.dart';
+import 'package:qurban_kit/features/mosque_dashboard/presentation/screens/recipients/recipients_page.dart';
 import 'settings/mosque_settings_page.dart';
 
 class MosqueAdminDashboard extends StatefulWidget {
@@ -50,7 +51,7 @@ class _MosqueAdminDashboardState extends State<MosqueAdminDashboard> {
     await UserRoleService.clearUserRoleData();
 
     if (mounted) {
-      Navigator.pushReplacementNamed(context, '/auth');
+      context.go('/auth');
     }
   }
 
