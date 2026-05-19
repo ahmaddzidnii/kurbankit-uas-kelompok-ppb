@@ -12,7 +12,7 @@ import 'package:qurban_kit/features/home/presentation/screens/home.dart';
 import 'package:qurban_kit/features/mosque_dashboard/presentation/screens/calculator/calculator_input_page.dart';
 import 'package:qurban_kit/features/mosque_dashboard/presentation/screens/calculator/calculator_result_page.dart';
 import 'package:qurban_kit/features/mosque_dashboard/presentation/screens/calculator/calculator_template_selection_page.dart';
-import 'package:qurban_kit/features/mosque_dashboard/presentation/screens/dashboard/admin_home_page.dart';
+import 'package:qurban_kit/features/mosque_dashboard/presentation/mosque_dashboard/screens/dashboard/admin_home_page.dart';
 import 'package:qurban_kit/features/mosque_dashboard/presentation/screens/mosque_admin_dashboard.dart';
 import 'package:qurban_kit/features/mosque_dashboard/presentation/screens/mosque_waiting_dashboard.dart';
 import 'package:qurban_kit/features/mosque_dashboard/presentation/screens/periods/periods_page.dart';
@@ -20,8 +20,8 @@ import 'package:qurban_kit/features/mosque_dashboard/presentation/screens/profil
 import 'package:qurban_kit/features/mosque_dashboard/presentation/screens/recipients/recipient_form_page.dart';
 import 'package:qurban_kit/features/mosque_dashboard/presentation/screens/recipients/recipients_page.dart';
 import 'package:qurban_kit/features/mosque_dashboard/presentation/screens/settings/mosque_settings_page.dart';
-import 'package:qurban_kit/features/mosque_registration/presentation/screens/mosque_registration_page.dart';
-import 'package:qurban_kit/features/onboarding/presentation/screens/onboarding.dart';
+import 'package:qurban_kit/features/mosque_registration/presentation/mosque_registration/screens/mosque_registration_page.dart';
+import 'package:qurban_kit/features/onboarding/presentation/onboarding/screens/onboarding.dart';
 import 'package:qurban_kit/features/qurban_distribution/data/models/calculator_models.dart';
 import 'package:qurban_kit/features/splash/presentation/screens/splash.dart';
 

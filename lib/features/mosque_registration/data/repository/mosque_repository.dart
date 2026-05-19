@@ -2,7 +2,7 @@ import 'package:qurban_kit/core/configs/exceptions.dart';
 import 'package:qurban_kit/core/services/user_role_service.dart';
 import 'package:qurban_kit/features/mosque_registration/data/models/mosque_model.dart';
 import 'package:qurban_kit/features/mosque_registration/data/models/mosque_registration_request_model.dart';
-import 'package:qurban_kit/features/mosque_registration/data/sources/mosque_data_source.dart';
+import 'package:qurban_kit/features/mosque_registration/data/services/mosque_data_source.dart';
 
 abstract class MosqueRepository {
   Future<MosqueModel> registerMosque(MosqueRegistrationRequest request);

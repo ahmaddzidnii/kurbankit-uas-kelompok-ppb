@@ -3,7 +3,7 @@ import 'package:qurban_kit/core/configs/exceptions.dart';
 import 'package:qurban_kit/core/services/api_client.dart';
 import 'package:qurban_kit/core/services/user_role_service.dart';
 import 'package:qurban_kit/features/auth/data/models/auth_models.dart';
-import 'package:qurban_kit/features/auth/data/sources/auth_data_source.dart';
+import 'package:qurban_kit/features/auth/data/services/auth_data_source.dart';
 
 abstract class AuthRepository {
   Future<UserData> login(String email, String password);

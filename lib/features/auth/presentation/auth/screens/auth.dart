@@ -5,7 +5,7 @@ import 'package:qurban_kit/core/configs/theme/theme.dart';
 import 'package:qurban_kit/core/services/onboarding_service.dart';
 import 'package:qurban_kit/core/services/service_locator.dart';
 import 'package:qurban_kit/core/services/user_role_service.dart';
-import 'package:qurban_kit/features/auth/presentation/auth/pages/register.dart';
+import 'package:qurban_kit/features/auth/presentation/screens/register.dart';
 
 class AuthPage extends StatefulWidget {
   const AuthPage({super.key});
