@@ -3,11 +3,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:qurban_kit/core/services/post_login_route_service.dart';
+import 'package:qurban_kit/features/auth/data/models/auth_models.dart';
 import 'package:qurban_kit/features/onboarding/presentation/onboarding/screens/onboarding.dart';
 import 'package:qurban_kit/core/configs/theme/theme.dart';
 import 'package:qurban_kit/core/services/onboarding_service.dart';
 import 'package:qurban_kit/core/services/service_locator.dart';
-import 'package:qurban_kit/core/services/user_role_service.dart';
 
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
@@ -42,6 +43,7 @@ class _SplashPageState extends State<SplashPage> {
     final isLoggedIn = await OnboardingService.isUserLoggedIn();
 
     String? nextRoute;
+    UserData? profileUser;
 
     if (isNewUser) {
       // Show onboarding for new users
@@ -58,24 +60,9 @@ class _SplashPageState extends State<SplashPage> {
             final user = await authRepository.getProfile();
 
             if (user != null) {
-              // Save role for future reference
-              if (user.role != null) {
-                await UserRoleService.setUserRole(user.role!);
-              }
-
-              // Route based on role
-              final userRole = await UserRoleService.getUserRole();
-
-              if (userRole == 'SUPER_ADMIN') {
-                nextRoute = '/admin-dashboard';
-              } else if (userRole == 'ADMIN_MASJID') {
-                // Admin Masjid goes directly to dashboard
-                // They can register mosque via the quick action button
-                nextRoute = '/mosque-admin-dashboard';
-              } else {
-                // Default to home if role is unknown
-                nextRoute = '/home';
-              }
+              profileUser = user;
+              await PostLoginRouteService.syncUserState(user);
+              nextRoute = PostLoginRouteService.resolveRoute(user);
             } else {
               // Profile fetch returned null, show auth page
               await authRepository.clearTokens();
@@ -101,6 +88,12 @@ class _SplashPageState extends State<SplashPage> {
 
     if (!mounted) return;
     if (nextRoute != null) {
+      if (nextRoute == '/mosque-registration-rejected' &&
+          profileUser?.masjid != null) {
+        context.go(nextRoute, extra: profileUser!.masjid);
+        return;
+      }
+
       context.go(nextRoute);
     }
   }

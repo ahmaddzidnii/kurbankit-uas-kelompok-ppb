@@ -1,6 +1,7 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:qurban_kit/core/configs/exceptions.dart';
 import 'package:qurban_kit/core/services/api_client.dart';
+import 'package:qurban_kit/core/services/post_login_route_service.dart';
 import 'package:qurban_kit/core/services/user_role_service.dart';
 import 'package:qurban_kit/features/auth/data/models/auth_models.dart';
 import 'package:qurban_kit/features/auth/data/services/auth_data_source.dart';
@@ -40,10 +41,7 @@ class AuthRepositoryImpl implements AuthRepository {
       // Fetch user profile
       final user = await _dataSource.getProfile();
 
-      // Save user role for role-based routing
-      if (user.role != null) {
-        await UserRoleService.setUserRole(user.role!);
-      }
+      await PostLoginRouteService.syncUserState(user);
 
       return user;
     } catch (e) {
@@ -85,7 +83,6 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       await _dataSource.logout();
       await clearTokens();
-      // Clear role and mosque registration data
       await UserRoleService.clearUserRoleData();
     } catch (e) {
       // Clear tokens even if logout API fails

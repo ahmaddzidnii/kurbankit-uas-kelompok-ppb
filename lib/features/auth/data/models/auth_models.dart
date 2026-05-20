@@ -62,12 +62,14 @@ class UserData {
   final String name;
   final String email;
   final String? role;
+  final ProfileMasjid? masjid;
 
   UserData({
     required this.id,
     required this.name,
     required this.email,
     this.role,
+    this.masjid,
   });
 
   factory UserData.fromJson(Map<String, dynamic> json) {
@@ -76,6 +78,9 @@ class UserData {
       name: json['name'] ?? '',
       email: json['email'] ?? '',
       role: json['role'],
+      masjid: json['masjid'] is Map<String, dynamic>
+          ? ProfileMasjid.fromJson(json['masjid'] as Map<String, dynamic>)
+          : null,
     );
   }
 
@@ -85,6 +90,60 @@ class UserData {
       'name': name,
       'email': email,
       if (role != null) 'role': role,
+      if (masjid != null) 'masjid': masjid!.toJson(),
     };
+  }
+}
+
+class ProfileMasjid {
+  final String id;
+  final String nama;
+  final String status;
+  final String? rejectionReason;
+
+  ProfileMasjid({
+    required this.id,
+    required this.nama,
+    required this.status,
+    this.rejectionReason,
+  });
+
+  factory ProfileMasjid.fromJson(Map<String, dynamic> json) {
+    return ProfileMasjid(
+      id: json['id'] ?? '',
+      nama: json['nama'] ?? '',
+      status: json['status'] ?? '',
+      rejectionReason: _readString(json, const [
+        'rejectionReason',
+        'reason',
+        'alasan',
+        'rejection_reason',
+        'notes',
+        'catatan',
+      ]),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {'id': id, 'nama': nama, 'status': status};
+  }
+
+  bool get isPending => status.toUpperCase() == 'PENDING';
+
+  bool get isApproved => status.toUpperCase() == 'APPROVED';
+
+  bool get isRejected => status.toUpperCase() == 'REJECTED';
+
+  bool get isSuspended => status.toUpperCase() == 'SUSPENDED';
+
+  static String? _readString(Map<String, dynamic> json, List<String> keys) {
+    for (final key in keys) {
+      final value = json[key];
+      if (value is String && value.trim().isNotEmpty) {
+        return value.trim();
+      }
+    }
+
+    return null;
   }
 }

@@ -13,7 +13,9 @@ import 'package:qurban_kit/features/mosque_dashboard/presentation/screens/calcul
 import 'package:qurban_kit/features/mosque_dashboard/presentation/screens/calculator/calculator_result_page.dart';
 import 'package:qurban_kit/features/mosque_dashboard/presentation/screens/calculator/calculator_template_selection_page.dart';
 import 'package:qurban_kit/features/mosque_dashboard/presentation/mosque_dashboard/screens/dashboard/admin_home_page.dart';
+import 'package:qurban_kit/features/mosque_dashboard/presentation/screens/mosque_account_suspended_page.dart';
 import 'package:qurban_kit/features/mosque_dashboard/presentation/screens/mosque_admin_dashboard.dart';
+import 'package:qurban_kit/features/mosque_dashboard/presentation/screens/mosque_registration_rejected_page.dart';
 import 'package:qurban_kit/features/mosque_dashboard/presentation/screens/mosque_waiting_dashboard.dart';
 import 'package:qurban_kit/features/mosque_dashboard/presentation/screens/periods/periods_page.dart';
 import 'package:qurban_kit/features/mosque_dashboard/presentation/screens/profile/mosque_profile_page.dart';
@@ -56,6 +58,19 @@ class AppRouter {
       GoRoute(
         path: '/mosque-dashboard-waiting',
         builder: (context, state) => const MosqueWaitingDashboard(),
+      ),
+      GoRoute(
+        path: '/mosque-registration-rejected',
+        builder: (context, state) {
+          final mosque = state.extra is ProfileMasjid
+              ? state.extra as ProfileMasjid
+              : null;
+          return MosqueRegistrationRejectedPage(mosque: mosque);
+        },
+      ),
+      GoRoute(
+        path: '/mosque-account-suspended',
+        builder: (context, state) => const MosqueAccountSuspendedPage(),
       ),
       GoRoute(
         path: '/mosque-admin-dashboard',
