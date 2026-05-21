@@ -4,6 +4,7 @@ import 'package:qurban_kit/core/configs/theme/theme.dart';
 import 'package:qurban_kit/core/services/service_locator.dart';
 import 'package:qurban_kit/core/utils/date_time_formatter.dart';
 import 'package:qurban_kit/features/admin_dashboard/data/models/admin_mosque_record.dart';
+import 'package:qurban_kit/features/admin_dashboard/data/models/admin_mosque_status.dart';
 import 'package:qurban_kit/features/admin_dashboard/data/services/admin_mosque_data_source.dart';
 import 'package:qurban_kit/features/admin_dashboard/presentation/screens/verification_list_components.dart';
 
@@ -60,23 +61,9 @@ class _RequestListTabState extends State<RequestListTab> {
     }).toList();
   }
 
-  Color _statusColor(String status) {
-    switch (status.toUpperCase()) {
-      case 'PENDING':
-        return Colors.orange;
-      case 'APPROVED':
-      case 'ACTIVE':
-        return Colors.green;
-      case 'REJECTED':
-      case 'BLOKIR':
-      case 'BLOCKED':
-        return Colors.red;
-      default:
-        return AppColors.textSubdued;
-    }
-  }
-
   Widget _buildCard(AdminMosqueRecord item) {
+    final statusInfo = mapAdminMosqueStatus(item.status);
+
     return InkWell(
       onTap: () async {
         final updated = await context.push<bool>('/admin-detail', extra: item);
@@ -170,15 +157,15 @@ class _RequestListTabState extends State<RequestListTab> {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: _statusColor(item.status).withOpacity(0.1),
+                    color: statusInfo.color.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(0),
                   ),
                   child: Text(
-                    item.status,
+                    statusInfo.label,
                     style: TextStyle(
                       fontSize: AppTypography.bodySmall,
                       fontWeight: AppTypography.medium,
-                      color: _statusColor(item.status),
+                      color: statusInfo.color,
                       letterSpacing: 0.2,
                     ),
                   ),

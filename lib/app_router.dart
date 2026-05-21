@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:qurban_kit/features/admin_dashboard/data/models/admin_mosque_record.dart';
 import 'package:qurban_kit/features/admin_dashboard/presentation/screens/mosque_detail_page.dart';
-import 'package:qurban_kit/features/admin_dashboard/presentation/screens/takedown_page.dart';
 import 'package:qurban_kit/features/admin_dashboard/presentation/screens/verification_detail_page.dart';
 import 'package:qurban_kit/features/admin_dashboard/presentation/screens/verification_list_page.dart';
 import 'package:qurban_kit/features/auth/data/models/auth_models.dart';
@@ -161,10 +160,6 @@ class AppRouter {
           final mosque = state.extra as AdminMosqueRecord?;
           return MosqueDetailPage(mosque: mosque);
         },
-      ),
-      GoRoute(
-        path: '/admin-takedown',
-        builder: (context, state) => const TakedownPage(),
       ),
     ],
   );

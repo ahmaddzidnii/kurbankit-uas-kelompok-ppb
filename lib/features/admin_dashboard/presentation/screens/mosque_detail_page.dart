@@ -5,8 +5,10 @@ import 'package:qurban_kit/core/services/service_locator.dart';
 import 'package:qurban_kit/core/services/user_role_service.dart';
 import 'package:qurban_kit/core/utils/date_time_formatter.dart';
 import 'package:qurban_kit/features/admin_dashboard/data/models/admin_mosque_record.dart';
+import 'package:qurban_kit/features/admin_dashboard/data/models/admin_mosque_status.dart';
 import 'package:qurban_kit/features/auth/data/services/auth_repository.dart';
 import 'package:qurban_kit/features/admin_dashboard/data/services/admin_mosque_data_source.dart';
+import 'package:qurban_kit/features/admin_dashboard/presentation/screens/verification_detail_components.dart';
 
 class MosqueDetailPage extends StatefulWidget {
   final AdminMosqueRecord? mosque;
@@ -19,6 +21,41 @@ class MosqueDetailPage extends StatefulWidget {
 
 class _MosqueDetailPageState extends State<MosqueDetailPage> {
   bool _isLoading = false;
+  late final ScrollController _scrollController;
+  bool _isScrolledToTop = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (!mounted) {
+      return;
+    }
+
+    final safeAreaTop = MediaQuery.of(context).padding.top;
+    final appBarHeight = kToolbarHeight + safeAreaTop;
+    final threshold = (320.0 - 40.0) - appBarHeight;
+
+    if (_scrollController.hasClients) {
+      final isScrolled = _scrollController.offset > threshold;
+      if (isScrolled != _isScrolledToTop) {
+        setState(() {
+          _isScrolledToTop = isScrolled;
+        });
+      }
+    }
+  }
 
   void _handleLogout() {
     showDialog(
@@ -48,21 +85,6 @@ class _MosqueDetailPageState extends State<MosqueDetailPage> {
         ],
       ),
     );
-  }
-
-  Color _statusColor(String status) {
-    switch (status.toUpperCase()) {
-      case 'ACTIVE':
-        return Colors.green;
-      case 'BLOCKED':
-      case 'BLOKIR':
-      case 'TAKEDOWN':
-        return Colors.red;
-      case 'PENDING':
-        return Colors.orange;
-      default:
-        return AppColors.textSubdued;
-    }
   }
 
   Future<void> _blockMosque() async {
@@ -148,6 +170,8 @@ class _MosqueDetailPageState extends State<MosqueDetailPage> {
         ],
       ),
     );
+
+    reasonController.dispose();
   }
 
   Future<void> _unblockMosque() async {
@@ -162,81 +186,140 @@ class _MosqueDetailPageState extends State<MosqueDetailPage> {
     );
   }
 
-  Widget _buildField(String label, String value, {int maxLines = 1}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: AppTypography.bodyMedium,
-            fontWeight: AppTypography.medium,
-            color: AppColors.textSubdued,
-          ),
-        ),
-        const SizedBox(height: AppSpacing.xs),
-        TextFormField(
-          initialValue: value,
-          readOnly: true,
-          maxLines: maxLines,
-          decoration: InputDecoration(
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
+  Widget _buildHeroHeader(AdminMosqueRecord mosque) {
+    final hasImage = mosque.gambarMasjidUrl?.isNotEmpty == true;
+
+    return SizedBox(
+      height: 320,
+      width: double.infinity,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          if (hasImage)
+            Image.network(
+              mosque.gambarMasjidUrl!,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) =>
+                  _buildHeroFallback(),
+            )
+          else
+            _buildHeroFallback(),
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.black.withAlpha((0.08 * 255).round()),
+                  Colors.black.withAlpha((0.45 * 255).round()),
+                ],
+              ),
             ),
-            filled: true,
-            fillColor: AppColors.backgroundHighlight,
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
-  Widget _buildImageBox(String? url) {
-    final hasImage = url != null && url.isNotEmpty;
-
+  Widget _buildHeroFallback() {
     return Container(
-      height: 210,
-      width: double.infinity,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [AppColors.essentialBrightAccent, Color(0xFF0E2F2B)],
+        ),
+      ),
+      child: const Center(
+        child: Icon(Icons.mosque_outlined, size: 56, color: Colors.white),
+      ),
+    );
+  }
+
+  Widget _buildInfoTile(String label, String value) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
         color: AppColors.backgroundHighlight,
         borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(color: AppColors.backgroundElevatedHighlight),
       ),
-      child: hasImage
-          ? ClipRRect(
-              borderRadius: BorderRadius.circular(AppRadius.md),
-              child: Image.network(
-                url,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return _fallbackBox();
-                },
-              ),
-            )
-          : _fallbackBox(),
-    );
-  }
-
-  Widget _fallbackBox() {
-    return Center(
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            Icons.image_not_supported_outlined,
-            size: 48,
-            color: AppColors.textSubdued.withOpacity(0.5),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          const Text(
-            'Foto masjid tidak tersedia',
-            style: TextStyle(
-              fontSize: AppTypography.bodyMedium,
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: AppTypography.labelSmall,
+              fontWeight: AppTypography.medium,
               color: AppColors.textSubdued,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: AppTypography.bodyMedium,
+              fontWeight: AppTypography.semiBold,
+              color: AppColors.textBase,
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Text(
+      title,
+      style: const TextStyle(
+        fontSize: AppTypography.bodyLarge,
+        fontWeight: AppTypography.semiBold,
+        color: AppColors.textBase,
+      ),
+    );
+  }
+
+  Widget _buildActionButton(AdminMosqueRecord mosque) {
+    final isBlocked = mosque.isBlocked;
+
+    return Row(
+      children: [
+        Expanded(
+          child: ElevatedButton(
+            onPressed: _isLoading
+                ? null
+                : (isBlocked ? _unblockMosque : _blockMosque),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: isBlocked ? Colors.green : Colors.red,
+              disabledBackgroundColor: (isBlocked ? Colors.green : Colors.red)
+                  .withOpacity(0.38),
+              disabledForegroundColor: Colors.white.withOpacity(0.85),
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(6),
+              ),
+              minimumSize: const Size(double.infinity, 48),
+            ),
+            child: _isLoading
+                ? const SizedBox(
+                    height: 22,
+                    width: 22,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.5,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : Text(
+                    isBlocked ? 'Buka Blokir' : 'Blokir Masjid',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -254,123 +337,199 @@ class _MosqueDetailPageState extends State<MosqueDetailPage> {
       );
     }
 
+    const double headerHeight = 320.0;
+    const double overlapHeight = 40.0;
+
+    final statusInfo = mapAdminMosqueStatus(mosque.status);
+
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        backgroundColor: AppColors.essentialBrightAccent,
+        backgroundColor: _isScrolledToTop
+            ? AppColors.essentialBrightAccent
+            : Colors.transparent,
         foregroundColor: Colors.white,
         title: const Text('Detail Masjid'),
-        elevation: 0,
+        elevation: _isScrolledToTop ? 4 : 0,
+        scrolledUnderElevation: 0,
         actions: [
           IconButton(icon: const Icon(Icons.logout), onPressed: _handleLogout),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                CircleAvatar(
-                  radius: 28,
-                  backgroundColor: AppColors.essentialAnnouncement.withOpacity(
-                    0.14,
-                  ),
-                  child: const Icon(
-                    Icons.mosque,
-                    color: AppColors.essentialAnnouncement,
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        mosque.nama,
-                        style: const TextStyle(
-                          fontSize: AppTypography.headingMedium,
-                          fontWeight: AppTypography.semiBold,
-                          color: AppColors.textBase,
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.xs),
-                      Text(
-                        mosque.alamat,
-                        style: const TextStyle(
-                          fontSize: AppTypography.bodyMedium,
-                          color: AppColors.textSubdued,
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.sm),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.sm,
-                          vertical: AppSpacing.xs,
-                        ),
-                        decoration: BoxDecoration(
-                          color: _statusColor(mosque.status).withOpacity(0.12),
-                          borderRadius: BorderRadius.circular(AppRadius.xs),
-                        ),
-                        child: Text(
-                          mosque.status,
-                          style: TextStyle(
-                            color: _statusColor(mosque.status),
-                            fontWeight: AppTypography.medium,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            _buildImageBox(mosque.gambarMasjidUrl),
-            const SizedBox(height: AppSpacing.lg),
-            _buildField('Nama Masjid', mosque.nama),
-            const SizedBox(height: AppSpacing.md),
-            _buildField('Nomor SK', mosque.nomorSK ?? '-'),
-            const SizedBox(height: AppSpacing.md),
-            _buildField('Alamat', mosque.alamat, maxLines: 2),
-            const SizedBox(height: AppSpacing.md),
-            _buildField(
-              'Wilayah',
-              mosque.detailWilayah.formattedAddress.isNotEmpty
-                  ? mosque.detailWilayah.formattedAddress
-                  : '-',
-              maxLines: 2,
-            ),
-            const SizedBox(height: AppSpacing.md),
-            _buildField(
-              'Tanggal Daftar',
-              AppDateTimeFormatter.formatDate(mosque.createdAt),
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: _isLoading || mosque.isBlocked
-                        ? _unblockMosque
-                        : _blockMosque,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: mosque.isBlocked
-                          ? Colors.green
-                          : Colors.red,
-                      minimumSize: const Size(double.infinity, 48),
-                    ),
-                    child: Text(
-                      mosque.isBlocked ? 'Buka Blokir' : 'Blokir Masjid',
-                      style: const TextStyle(color: Colors.white),
-                    ),
-                  ),
-                ),
-              ],
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: AppColors.backgroundElevatedBase,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 16,
+              offset: const Offset(0, -4),
             ),
           ],
         ),
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.lg,
+              vertical: AppSpacing.md,
+            ),
+            child: _buildActionButton(mosque),
+          ),
+        ),
+      ),
+      body: Stack(
+        children: [
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: headerHeight,
+            child: _buildHeroHeader(mosque),
+          ),
+          Positioned.fill(
+            child: SingleChildScrollView(
+              controller: _scrollController,
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: Column(
+                children: [
+                  const SizedBox(height: headerHeight - overlapHeight),
+                  Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 960),
+                      child: Container(
+                        width: double.infinity,
+                        constraints: BoxConstraints(
+                          minHeight: MediaQuery.of(context).size.height,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.backgroundElevatedBase,
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(32.0),
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.18),
+                              blurRadius: 14,
+                              offset: const Offset(0, -4),
+                            ),
+                          ],
+                        ),
+                        padding: const EdgeInsets.only(
+                          left: AppSpacing.lg,
+                          right: AppSpacing.lg,
+                          top: AppSpacing.xl,
+                          bottom: 100.0,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        mosque.nama,
+                                        style: const TextStyle(
+                                          fontSize: AppTypography.headingMedium,
+                                          fontWeight: AppTypography.semiBold,
+                                          color: AppColors.textBase,
+                                        ),
+                                      ),
+                                      const SizedBox(height: AppSpacing.xs),
+                                      VerificationStatusChip(
+                                        status: mosque.status,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: AppSpacing.lg),
+                            _buildSectionTitle('Informasi Masjid'),
+                            const SizedBox(height: AppSpacing.sm),
+                            LayoutBuilder(
+                              builder: (context, constraints) {
+                                final isWide = constraints.maxWidth >= 700;
+                                final tileWidth = isWide
+                                    ? (constraints.maxWidth - AppSpacing.md) / 2
+                                    : constraints.maxWidth;
+
+                                return Wrap(
+                                  spacing: AppSpacing.md,
+                                  runSpacing: AppSpacing.md,
+                                  children: [
+                                    SizedBox(
+                                      width: tileWidth,
+                                      child: _buildInfoTile(
+                                        'Nama Masjid',
+                                        mosque.nama,
+                                      ),
+                                    ),
+                                    SizedBox(
+                                      width: tileWidth,
+                                      child: _buildInfoTile(
+                                        'Nomor SK',
+                                        mosque.nomorSK?.isNotEmpty == true
+                                            ? mosque.nomorSK!
+                                            : '-',
+                                      ),
+                                    ),
+                                    SizedBox(
+                                      width: tileWidth,
+                                      child: _buildInfoTile(
+                                        'Alamat',
+                                        mosque.alamat,
+                                      ),
+                                    ),
+                                    SizedBox(
+                                      width: tileWidth,
+                                      child: _buildInfoTile(
+                                        'Status',
+                                        statusInfo.label,
+                                      ),
+                                    ),
+                                    SizedBox(
+                                      width: constraints.maxWidth,
+                                      child: _buildInfoTile(
+                                        'Wilayah',
+                                        mosque
+                                                .detailWilayah
+                                                .formattedAddress
+                                                .isNotEmpty
+                                            ? mosque
+                                                  .detailWilayah
+                                                  .formattedAddress
+                                            : '-',
+                                      ),
+                                    ),
+                                    SizedBox(
+                                      width: constraints.maxWidth,
+                                      child: _buildInfoTile(
+                                        'Tanggal Daftar',
+                                        AppDateTimeFormatter.formatDate(
+                                          mosque.createdAt,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

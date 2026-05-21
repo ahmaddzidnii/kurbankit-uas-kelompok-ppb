@@ -1,3 +1,5 @@
+import 'admin_mosque_status.dart';
+
 class AdminMosqueDetailWilayah {
   final String? kodePos;
   final String? desa;
@@ -125,16 +127,14 @@ class AdminMosqueRecord {
     );
   }
 
-  bool get isPending => status.toUpperCase() == 'PENDING';
+  bool get isPending => mapAdminMosqueStatus(status).isPending;
 
   bool get isActive {
-    final upper = status.toUpperCase();
-    return upper == 'ACTIVE' || upper == 'AKTIF' || upper == 'APPROVED';
+    return mapAdminMosqueStatus(status).isActive;
   }
 
   bool get isBlocked {
-    final upper = status.toUpperCase();
-    return upper == 'BLOCKED' || upper == 'BLOKIR' || upper == 'TAKEDOWN';
+    return mapAdminMosqueStatus(status).isBlocked;
   }
 
   static String? _readString(Map<String, dynamic> json, List<String> keys) {

@@ -1,30 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:qurban_kit/core/configs/theme/theme.dart';
+import 'package:qurban_kit/features/admin_dashboard/data/models/admin_mosque_status.dart';
 
 class VerificationStatusChip extends StatelessWidget {
   final String status;
 
   const VerificationStatusChip({super.key, required this.status});
 
-  Color _statusColor(String status) {
-    switch (status.toUpperCase()) {
-      case 'PENDING':
-        return Colors.orange;
-      case 'APPROVED':
-      case 'ACTIVE':
-        return Colors.green;
-      case 'REJECTED':
-      case 'BLOCKED':
-      case 'BLOKIR':
-        return Colors.red;
-      default:
-        return AppColors.textSubdued;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    final color = _statusColor(status);
+    final statusInfo = mapAdminMosqueStatus(status);
 
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -32,12 +17,15 @@ class VerificationStatusChip extends StatelessWidget {
         vertical: AppSpacing.xs,
       ),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: statusInfo.color.withOpacity(0.12),
         borderRadius: BorderRadius.circular(AppRadius.xs),
       ),
       child: Text(
-        status,
-        style: TextStyle(color: color, fontWeight: AppTypography.medium),
+        statusInfo.label,
+        style: TextStyle(
+          color: statusInfo.color,
+          fontWeight: AppTypography.medium,
+        ),
       ),
     );
   }

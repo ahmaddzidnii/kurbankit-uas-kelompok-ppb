@@ -92,14 +92,17 @@ class _VerificationListPageState extends State<VerificationListPage> {
           items: const [
             BottomNavigationBarItem(
               icon: Icon(Icons.fact_check_outlined),
+              activeIcon: Icon(Icons.fact_check),
               label: 'Permintaan',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.mosque_outlined),
+              activeIcon: Icon(Icons.mosque),
               label: 'Daftar Masjid',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.person_outline_rounded),
+              activeIcon: Icon(Icons.person),
               label: 'Profil',
             ),
           ],

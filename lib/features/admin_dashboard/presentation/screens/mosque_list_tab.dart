@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:qurban_kit/core/configs/theme/theme.dart';
 import 'package:qurban_kit/core/services/service_locator.dart';
-import 'package:qurban_kit/core/utils/date_time_formatter.dart';
 import 'package:qurban_kit/features/admin_dashboard/data/models/admin_mosque_record.dart';
 import 'package:qurban_kit/features/admin_dashboard/data/services/admin_mosque_data_source.dart';
 import 'package:qurban_kit/features/admin_dashboard/presentation/screens/verification_list_components.dart';
@@ -59,22 +58,6 @@ class _MosqueListTabState extends State<MosqueListTab> {
     }).toList();
   }
 
-  Color _statusColor(String status) {
-    switch (status.toUpperCase()) {
-      case 'ACTIVE':
-      case 'AKTIF':
-        return Colors.green;
-      case 'BLOCKED':
-      case 'BLOKIR':
-      case 'TAKEDOWN':
-        return Colors.red;
-      case 'PENDING':
-        return Colors.orange;
-      default:
-        return AppColors.textSubdued;
-    }
-  }
-
   Widget _buildCard(AdminMosqueRecord item) {
     return InkWell(
       onTap: () async {
@@ -96,15 +79,6 @@ class _MosqueListTabState extends State<MosqueListTab> {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  CircleAvatar(
-                    radius: 24,
-                    backgroundColor: AppColors.essentialAnnouncement
-                        .withOpacity(0.16),
-                    child: const Icon(
-                      Icons.mosque,
-                      color: AppColors.essentialAnnouncement,
-                    ),
-                  ),
                   const SizedBox(width: AppSpacing.md),
                   Expanded(
                     child: Column(
@@ -132,43 +106,9 @@ class _MosqueListTabState extends State<MosqueListTab> {
                     ),
                   ),
                   const SizedBox(width: AppSpacing.sm),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.sm,
-                      vertical: AppSpacing.xs,
-                    ),
-                    decoration: BoxDecoration(
-                      color: _statusColor(item.status).withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(AppRadius.xs),
-                    ),
-                    child: Text(
-                      item.status,
-                      style: TextStyle(
-                        fontSize: AppTypography.labelSmall,
-                        fontWeight: AppTypography.medium,
-                        color: _statusColor(item.status),
-                      ),
-                    ),
-                  ),
                 ],
               ),
               const SizedBox(height: AppSpacing.sm),
-              Wrap(
-                spacing: AppSpacing.sm,
-                runSpacing: AppSpacing.sm,
-                children: [
-                  // VerificationInfoChip(
-                  //   label: 'Detail Wilayah',
-                  //   value: item.detailWilayah.formattedAddress.isNotEmpty
-                  //       ? item.detailWilayah.formattedAddress
-                  //       : '-',
-                  // ),
-                  // VerificationInfoChip(
-                  //   label: 'Tersimpan',
-                  //   value: AppDateTimeFormatter.formatDate(item.createdAt),
-                  // ),
-                ],
-              ),
             ],
           ),
         ),
@@ -188,10 +128,16 @@ class _MosqueListTabState extends State<MosqueListTab> {
             AppSpacing.sm,
           ),
           child: TextField(
+            style: const TextStyle(fontSize: AppTypography.bodyMedium),
             controller: _searchController,
             decoration: const InputDecoration(
-              hintText: 'Cari masjid...',
+              hintText: 'Cari masjid terdaftar...',
               prefixIcon: Icon(Icons.search),
+              contentPadding: EdgeInsets.all(AppSpacing.sm),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.all(Radius.circular(AppRadius.md)),
+                borderSide: BorderSide(color: AppColors.textSubdued, width: 1),
+              ),
             ),
           ),
         ),
