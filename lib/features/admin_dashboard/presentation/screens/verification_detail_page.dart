@@ -481,9 +481,7 @@ class _VerificationDetailPageState extends State<VerificationDetailPage> {
                                       width: tileWidth,
                                       child: _buildInfoTile(
                                         'Nama Pengaju',
-                                        request.namaPengaju?.isNotEmpty == true
-                                            ? request.namaPengaju!
-                                            : '-',
+                                        request.pengaju.displayNameWithEmail,
                                       ),
                                     ),
                                     SizedBox(

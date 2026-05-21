@@ -51,7 +51,6 @@ class _RequestListTabState extends State<RequestListTab> {
     return items.where((item) {
       final haystack = [
         item.nama,
-        item.namaPengaju ?? '',
         item.alamat,
         item.status,
         item.nomorSK ?? '',
@@ -113,9 +112,7 @@ class _RequestListTabState extends State<RequestListTab> {
               ),
               const SizedBox(height: 2),
               Text(
-                item.namaPengaju?.isNotEmpty == true
-                    ? item.namaPengaju!
-                    : 'Nama pengaju belum tersedia',
+                item.pengaju.displayNameWithEmail,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(

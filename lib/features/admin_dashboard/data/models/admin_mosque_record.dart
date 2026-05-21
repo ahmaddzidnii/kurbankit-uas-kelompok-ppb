@@ -39,10 +39,51 @@ class AdminMosqueDetailWilayah {
   }
 }
 
+class ObjectPengaju {
+  final String? id;
+  final String? name;
+  final String? email;
+
+  const ObjectPengaju({this.id, this.name, this.email});
+
+  factory ObjectPengaju.fromJson(dynamic json) {
+    if (json is! Map<String, dynamic>) {
+      return const ObjectPengaju();
+    }
+
+    return ObjectPengaju(
+      id: json['id']?.toString(),
+      name: json['name']?.toString(),
+      email: json['email']?.toString(),
+    );
+  }
+
+  String get displayNameWithEmail {
+    final nameValue = name?.trim();
+    final emailValue = email?.trim();
+
+    if (nameValue != null &&
+        nameValue.isNotEmpty &&
+        emailValue != null &&
+        emailValue.isNotEmpty) {
+      return '$nameValue ($emailValue)';
+    }
+
+    if (nameValue != null && nameValue.isNotEmpty) {
+      return nameValue;
+    }
+
+    if (emailValue != null && emailValue.isNotEmpty) {
+      return emailValue;
+    }
+
+    return '-';
+  }
+}
+
 class AdminMosqueRecord {
   final String id;
   final String nama;
-  final String? namaPengaju;
   final String? nomorSK;
   final String alamat;
   final String status;
@@ -50,11 +91,11 @@ class AdminMosqueRecord {
   final String? dokumenSKUrl;
   final DateTime? createdAt;
   final AdminMosqueDetailWilayah detailWilayah;
+  final ObjectPengaju pengaju;
 
   const AdminMosqueRecord({
     required this.id,
     required this.nama,
-    this.namaPengaju,
     this.nomorSK,
     required this.alamat,
     required this.status,
@@ -62,17 +103,13 @@ class AdminMosqueRecord {
     this.dokumenSKUrl,
     this.createdAt,
     required this.detailWilayah,
+    required this.pengaju,
   });
 
   factory AdminMosqueRecord.fromJson(Map<String, dynamic> json) {
     return AdminMosqueRecord(
       id: json['id']?.toString() ?? '',
       nama: _readString(json, const ['nama', 'name']) ?? '',
-      namaPengaju: _readString(json, const [
-        'namaPengaju',
-        'pengaju',
-        'adminName',
-      ]),
       nomorSK: _readString(json, const [
         'nomorSK',
         'nomorSk',
@@ -84,6 +121,7 @@ class AdminMosqueRecord {
       dokumenSKUrl: _readString(json, const ['dokumenSKUrl', 'dokumenUrl']),
       createdAt: _parseDate(json['createdAt'] ?? json['registeredAt']),
       detailWilayah: AdminMosqueDetailWilayah.fromJson(json['detailWilayah']),
+      pengaju: ObjectPengaju.fromJson(json['pemohon']),
     );
   }
 
