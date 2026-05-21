@@ -96,7 +96,7 @@ class _RequestListTabState extends State<RequestListTab> {
         child: Padding(
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.md,
-            vertical: AppSpacing.lg,
+            vertical: AppSpacing.md,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -206,10 +206,16 @@ class _RequestListTabState extends State<RequestListTab> {
             AppSpacing.sm,
           ),
           child: TextField(
+            style: const TextStyle(fontSize: AppTypography.bodyMedium),
             controller: _searchController,
             decoration: const InputDecoration(
               hintText: 'Cari permintaan masjid...',
               prefixIcon: Icon(Icons.search),
+              contentPadding: EdgeInsets.all(AppSpacing.sm),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.all(Radius.circular(AppRadius.md)),
+                borderSide: BorderSide(color: AppColors.textSubdued, width: 1),
+              ),
             ),
           ),
         ),
