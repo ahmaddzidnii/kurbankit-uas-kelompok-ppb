@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:qurban_kit/core/configs/theme/theme.dart';
 import 'package:qurban_kit/core/services/service_locator.dart';
 import 'package:qurban_kit/core/services/user_role_service.dart';
+import 'package:qurban_kit/core/utils/date_time_formatter.dart';
 import 'package:qurban_kit/features/admin_dashboard/data/models/admin_mosque_record.dart';
 import 'package:qurban_kit/features/auth/data/services/auth_repository.dart';
 import 'package:qurban_kit/features/admin_dashboard/data/services/admin_mosque_data_source.dart';
@@ -62,30 +63,6 @@ class _MosqueDetailPageState extends State<MosqueDetailPage> {
       default:
         return AppColors.textSubdued;
     }
-  }
-
-  String _formatDate(DateTime? date) {
-    if (date == null) {
-      return '-';
-    }
-
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'Mei',
-      'Jun',
-      'Jul',
-      'Agu',
-      'Sep',
-      'Okt',
-      'Nov',
-      'Des',
-    ];
-
-    final day = date.day.toString().padLeft(2, '0');
-    return '$day ${months[date.month - 1]} ${date.year}';
   }
 
   Future<void> _blockMosque() async {
@@ -366,7 +343,10 @@ class _MosqueDetailPageState extends State<MosqueDetailPage> {
               maxLines: 2,
             ),
             const SizedBox(height: AppSpacing.md),
-            _buildField('Tanggal Daftar', _formatDate(mosque.createdAt)),
+            _buildField(
+              'Tanggal Daftar',
+              AppDateTimeFormatter.formatDate(mosque.createdAt),
+            ),
             const SizedBox(height: AppSpacing.lg),
             Row(
               children: [

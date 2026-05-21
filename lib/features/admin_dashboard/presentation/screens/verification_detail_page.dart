@@ -3,7 +3,9 @@ import 'package:go_router/go_router.dart';
 import 'package:qurban_kit/core/configs/theme/theme.dart';
 import 'package:qurban_kit/core/services/service_locator.dart';
 import 'package:qurban_kit/core/services/user_role_service.dart';
+import 'package:qurban_kit/core/utils/date_time_formatter.dart';
 import 'package:qurban_kit/features/admin_dashboard/data/models/admin_mosque_record.dart';
+import 'package:qurban_kit/features/admin_dashboard/presentation/screens/verification_detail_components.dart';
 import 'package:qurban_kit/features/auth/data/services/auth_repository.dart';
 import 'package:qurban_kit/features/admin_dashboard/data/services/admin_mosque_data_source.dart';
 
@@ -47,46 +49,6 @@ class _VerificationDetailPageState extends State<VerificationDetailPage> {
         ],
       ),
     );
-  }
-
-  String _formatDate(DateTime? date) {
-    if (date == null) {
-      return '-';
-    }
-
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'Mei',
-      'Jun',
-      'Jul',
-      'Agu',
-      'Sep',
-      'Okt',
-      'Nov',
-      'Des',
-    ];
-
-    final day = date.day.toString().padLeft(2, '0');
-    return '$day ${months[date.month - 1]} ${date.year}';
-  }
-
-  Color _statusColor(String status) {
-    switch (status.toUpperCase()) {
-      case 'PENDING':
-        return Colors.orange;
-      case 'APPROVED':
-      case 'ACTIVE':
-        return Colors.green;
-      case 'REJECTED':
-      case 'BLOCKED':
-      case 'BLOKIR':
-        return Colors.red;
-      default:
-        return AppColors.textSubdued;
-    }
   }
 
   Future<void> _approveRegistration() async {
@@ -198,84 +160,6 @@ class _VerificationDetailPageState extends State<VerificationDetailPage> {
     );
   }
 
-  Widget _buildImageBox(String? url, String fallbackLabel) {
-    final hasImage = url != null && url.isNotEmpty;
-
-    return Container(
-      height: 180,
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: AppColors.backgroundHighlight,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.backgroundElevatedHighlight),
-      ),
-      child: hasImage
-          ? ClipRRect(
-              borderRadius: BorderRadius.circular(AppRadius.md),
-              child: Image.network(
-                url,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return _fallbackBox(fallbackLabel);
-                },
-              ),
-            )
-          : _fallbackBox(fallbackLabel),
-    );
-  }
-
-  Widget _fallbackBox(String label) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.image_not_supported_outlined,
-            size: 48,
-            color: AppColors.textSubdued.withOpacity(0.5),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: AppTypography.bodyMedium,
-              color: AppColors.textSubdued,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildField(String label, String value, {int maxLines = 1}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: AppTypography.bodyMedium,
-            fontWeight: AppTypography.medium,
-            color: AppColors.textSubdued,
-          ),
-        ),
-        const SizedBox(height: AppSpacing.xs),
-        TextFormField(
-          initialValue: value,
-          readOnly: true,
-          maxLines: maxLines,
-          decoration: InputDecoration(
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-            ),
-            filled: true,
-            fillColor: AppColors.backgroundHighlight,
-          ),
-        ),
-      ],
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final request = widget.request;
@@ -342,43 +226,30 @@ class _VerificationDetailPageState extends State<VerificationDetailPage> {
                         ),
                       ),
                       const SizedBox(height: AppSpacing.sm),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.sm,
-                          vertical: AppSpacing.xs,
-                        ),
-                        decoration: BoxDecoration(
-                          color: _statusColor(request.status).withOpacity(0.12),
-                          borderRadius: BorderRadius.circular(AppRadius.xs),
-                        ),
-                        child: Text(
-                          request.status,
-                          style: TextStyle(
-                            color: _statusColor(request.status),
-                            fontWeight: AppTypography.medium,
-                          ),
-                        ),
-                      ),
+                      VerificationStatusChip(status: request.status),
                     ],
                   ),
                 ),
               ],
             ),
             const SizedBox(height: AppSpacing.lg),
-            _buildImageBox(
-              request.gambarMasjidUrl,
-              'Foto masjid belum tersedia',
+            VerificationImageBox(
+              url: request.gambarMasjidUrl,
+              fallbackLabel: 'Foto masjid belum tersedia',
             ),
             const SizedBox(height: AppSpacing.lg),
-            _buildField('Nama Masjid', request.nama),
+            VerificationReadOnlyField('Nama Masjid', request.nama),
             const SizedBox(height: AppSpacing.md),
-            _buildField('Nama Pengaju', request.namaPengaju ?? '-'),
+            VerificationReadOnlyField(
+              'Nama Pengaju',
+              request.namaPengaju ?? '-',
+            ),
             const SizedBox(height: AppSpacing.md),
-            _buildField('Nomor SK', request.nomorSK ?? '-'),
+            VerificationReadOnlyField('Nomor SK', request.nomorSK ?? '-'),
             const SizedBox(height: AppSpacing.md),
-            _buildField('Alamat', request.alamat, maxLines: 2),
+            VerificationReadOnlyField('Alamat', request.alamat, maxLines: 2),
             const SizedBox(height: AppSpacing.md),
-            _buildField(
+            VerificationReadOnlyField(
               'Wilayah',
               request.detailWilayah.formattedAddress.isNotEmpty
                   ? request.detailWilayah.formattedAddress
@@ -386,7 +257,10 @@ class _VerificationDetailPageState extends State<VerificationDetailPage> {
               maxLines: 2,
             ),
             const SizedBox(height: AppSpacing.md),
-            _buildField('Tanggal Pengajuan', _formatDate(request.createdAt)),
+            VerificationReadOnlyField(
+              'Tanggal Pengajuan',
+              AppDateTimeFormatter.formatDate(request.createdAt),
+            ),
             const SizedBox(height: AppSpacing.lg),
             const Text(
               'Dokumen Pendukung',
@@ -397,9 +271,9 @@ class _VerificationDetailPageState extends State<VerificationDetailPage> {
               ),
             ),
             const SizedBox(height: AppSpacing.sm),
-            _buildImageBox(
-              request.dokumenSKUrl,
-              'Dokumen verifikasi belum tersedia',
+            VerificationImageBox(
+              url: request.dokumenSKUrl,
+              fallbackLabel: 'Dokumen verifikasi belum tersedia',
             ),
             const SizedBox(height: AppSpacing.lg),
             Row(
