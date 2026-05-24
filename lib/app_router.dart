@@ -22,7 +22,7 @@ import 'package:qurban_kit/features/mosque_dashboard/presentation/screens/recipi
 import 'package:qurban_kit/features/mosque_dashboard/presentation/screens/recipients/recipients_page.dart';
 import 'package:qurban_kit/features/mosque_dashboard/presentation/screens/settings/mosque_settings_page.dart';
 import 'package:qurban_kit/features/mosque_registration/presentation/mosque_registration/screens/mosque_registration_page.dart';
-import 'package:qurban_kit/features/onboarding/presentation/onboarding/screens/onboarding.dart';
+import 'package:qurban_kit/features/onboarding/presentation/screens/onboarding.dart';
 import 'package:qurban_kit/features/qurban_distribution/data/models/calculator_models.dart';
 import 'package:qurban_kit/features/splash/presentation/screens/splash.dart';
 

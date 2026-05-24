@@ -82,10 +82,6 @@ class _AdminHomePageState extends State<AdminHomePage> {
                 // Recent activity
                 _buildRecentActivitySection(),
                 const SizedBox(height: AppSpacing.xl),
-
-                // Guide card
-                _buildGuideCard(),
-                const SizedBox(height: AppSpacing.lg),
               ],
             ),
           ),
@@ -105,7 +101,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
               Text(
                 'Selamat Pagi,',
                 style: TextStyle(
-                  fontSize: AppTypography.bodyMedium,
+                  fontSize: AppTypography.bodySmall,
                   color: AppColors.textSubdued,
                   fontWeight: AppTypography.regular,
                 ),
@@ -114,7 +110,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
               Text(
                 _user?.name ?? 'Admin Masjid',
                 style: const TextStyle(
-                  fontSize: AppTypography.displaySmall,
+                  fontSize: AppTypography.headingLarge,
                   fontWeight: AppTypography.bold,
                   color: AppColors.textBase,
                 ),
@@ -124,42 +120,6 @@ class _AdminHomePageState extends State<AdminHomePage> {
         ),
         Row(
           children: [
-            // Notification icon
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: AppColors.backgroundElevatedBase,
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-                border: Border.all(
-                  color: AppColors.decorativeSubdued,
-                  width: 1,
-                ),
-              ),
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  Icon(
-                    Icons.notifications_none_rounded,
-                    color: AppColors.textBase,
-                    size: 20,
-                  ),
-                  Positioned(
-                    top: 8,
-                    right: 8,
-                    child: Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: AppColors.essentialNegative,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: AppSpacing.md),
             // Profile avatar
             GestureDetector(
               onTap: () {
@@ -234,7 +194,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
                   borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
                 child: const Text(
-                  'ACTIVE PERIOD',
+                  'Periode Aktif',
                   style: TextStyle(
                     fontSize: AppTypography.labelSmall,
                     fontWeight: AppTypography.bold,
@@ -267,7 +227,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text(
-                    'Preparation Progress',
+                    'Progress: 325/500 Mustahiq',
                     style: TextStyle(
                       fontSize: AppTypography.bodyMedium,
                       fontWeight: AppTypography.medium,
@@ -301,10 +261,8 @@ class _AdminHomePageState extends State<AdminHomePage> {
           // Days remaining
           Row(
             children: [
-              Icon(Icons.access_time_rounded, color: Colors.white, size: 18),
-              const SizedBox(width: AppSpacing.sm),
               const Text(
-                '124 Days until Tashreeq',
+                '27 Mei 2024 - 1447 H',
                 style: TextStyle(
                   fontSize: AppTypography.bodyMedium,
                   fontWeight: AppTypography.medium,
@@ -319,28 +277,78 @@ class _AdminHomePageState extends State<AdminHomePage> {
   }
 
   Widget _buildStatisticsSection() {
-    return Row(
-      children: [
-        Expanded(
-          child: _buildStatisticCard(
-            icon: Icons.people_rounded,
-            title: 'TOTAL RECIPIENTS',
-            value: '1,248',
-            backgroundColor: AppColors.essentialBrightAccent.withOpacity(0.1),
-            iconColor: AppColors.essentialBrightAccent,
+    return _buildCompactStatisticCard(
+      icon: Icons.people_rounded,
+      title: 'Total recipients',
+      value: '1,248',
+      subtitle: 'Seluruh mustahiq terdaftar',
+      backgroundColor: AppColors.essentialBrightAccent.withOpacity(0.1),
+      iconColor: AppColors.essentialBrightAccent,
+    );
+  }
+
+  Widget _buildCompactStatisticCard({
+    required IconData icon,
+    required String title,
+    required String value,
+    required String subtitle,
+    required Color backgroundColor,
+    required Color iconColor,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: BoxDecoration(
+        color: AppColors.backgroundElevatedBase,
+        border: Border.all(color: AppColors.decorativeSubdued, width: 1),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: backgroundColor,
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+            ),
+            child: Icon(icon, color: iconColor, size: 22),
           ),
-        ),
-        const SizedBox(width: AppSpacing.lg),
-        Expanded(
-          child: _buildStatisticCard(
-            icon: Icons.mosque_rounded,
-            title: 'REGISTERED MOSQUES',
-            value: '24',
-            backgroundColor: const Color(0xFFFCE4EC).withOpacity(0.8),
-            iconColor: const Color(0xFFE05C7F),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: AppTypography.labelMedium,
+                    fontWeight: AppTypography.semiBold,
+                    color: AppColors.textSubdued,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontSize: AppTypography.bodySmall,
+                    color: AppColors.textSubdued,
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
+          const SizedBox(width: AppSpacing.md),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: AppTypography.headingLarge,
+              fontWeight: AppTypography.bold,
+              color: AppColors.textBase,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -407,36 +415,24 @@ class _AdminHomePageState extends State<AdminHomePage> {
           ),
         ),
         const SizedBox(height: AppSpacing.md),
-        Row(
+        Column(
           children: [
-            Expanded(
-              child: _buildActionButton(
-                icon: Icons.person_add_rounded,
-                label: 'Add Recipient',
-                onTap: () {
-                  context.push('/mosque-recipient-form');
-                },
-              ),
+            _buildActionButton(
+              icon: Icons.person_add_rounded,
+              label: 'Add Recipient',
+              description: 'Masukkan mustahiq baru ke data distribusi',
+              onTap: () {
+                context.push('/mosque-recipient-form');
+              },
             ),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: _buildActionButton(
-                icon: Icons.calculate_rounded,
-                label: 'Calculate Qurban',
-                onTap: () {
-                  context.push('/calculator-template-selection');
-                },
-              ),
-            ),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: _buildActionButton(
-                icon: Icons.add_location_rounded,
-                label: 'Register Mosque',
-                onTap: () {
-                  context.push('/mosque-registration');
-                },
-              ),
+            const SizedBox(height: AppSpacing.md),
+            _buildActionButton(
+              icon: Icons.calculate_rounded,
+              label: 'Calculate Qurban',
+              description: 'Hitung kebutuhan qurban dengan cepat',
+              onTap: () {
+                context.push('/calculator-template-selection');
+              },
             ),
           ],
         ),
@@ -447,22 +443,24 @@ class _AdminHomePageState extends State<AdminHomePage> {
   Widget _buildActionButton({
     required IconData icon,
     required String label,
+    required String description,
     required VoidCallback onTap,
   }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
+        width: double.infinity,
         padding: const EdgeInsets.all(AppSpacing.lg),
         decoration: BoxDecoration(
           color: AppColors.backgroundElevatedBase,
           border: Border.all(color: AppColors.decorativeSubdued, width: 1),
           borderRadius: BorderRadius.circular(AppRadius.md),
         ),
-        child: Column(
+        child: Row(
           children: [
             Container(
-              width: 40,
-              height: 40,
+              width: 44,
+              height: 44,
               decoration: BoxDecoration(
                 color: AppColors.essentialBrightAccent.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(AppRadius.sm),
@@ -470,18 +468,37 @@ class _AdminHomePageState extends State<AdminHomePage> {
               child: Icon(
                 icon,
                 color: AppColors.essentialBrightAccent,
-                size: 20,
+                size: 22,
               ),
             ),
-            const SizedBox(height: AppSpacing.sm),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: AppTypography.labelMedium,
-                fontWeight: AppTypography.semiBold,
-                color: AppColors.textBase,
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: const TextStyle(
+                      fontSize: AppTypography.bodyLarge,
+                      fontWeight: AppTypography.semiBold,
+                      color: AppColors.textBase,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(
+                    description,
+                    style: TextStyle(
+                      fontSize: AppTypography.bodySmall,
+                      color: AppColors.textSubdued,
+                    ),
+                  ),
+                ],
               ),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Icon(
+              Icons.chevron_right_rounded,
+              color: AppColors.textSubdued.withOpacity(0.75),
             ),
           ],
         ),
@@ -497,14 +514,13 @@ class _AdminHomePageState extends State<AdminHomePage> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'Recent Activity',
+              'Riwayat Aktivitas',
               style: TextStyle(
                 fontSize: AppTypography.headingMedium,
                 fontWeight: AppTypography.semiBold,
                 color: AppColors.textBase,
               ),
             ),
-            TextButton(onPressed: () {}, child: const Text('View All')),
           ],
         ),
         const SizedBox(height: AppSpacing.md),
@@ -593,90 +609,6 @@ class _AdminHomePageState extends State<AdminHomePage> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildGuideCard() {
-    return GestureDetector(
-      onTap: () {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Guide - Coming Soon')));
-      },
-      child: Container(
-        height: 140,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          gradient: LinearGradient(
-            colors: [
-              AppColors.essentialBrightAccent.withOpacity(0.7),
-              AppColors.essentialBrightAccent.withOpacity(0.5),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            gradient: LinearGradient(
-              colors: [
-                Colors.black.withOpacity(0.4),
-                Colors.black.withOpacity(0.2),
-              ],
-              begin: Alignment.bottomCenter,
-              end: Alignment.topCenter,
-            ),
-          ),
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.end,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(
-                    Icons.auto_stories_rounded,
-                    color: Colors.white,
-                    size: 24,
-                  ),
-                  const SizedBox(width: AppSpacing.md),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Guide to Sacred Rituals',
-                          style: TextStyle(
-                            fontSize: AppTypography.headingMedium,
-                            fontWeight: AppTypography.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: AppSpacing.xs),
-                        const Text(
-                          'Learn the best practices for Qurban management.',
-                          style: TextStyle(
-                            fontSize: AppTypography.bodySmall,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
