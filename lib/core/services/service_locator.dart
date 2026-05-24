@@ -6,6 +6,7 @@ import 'package:qurban_kit/features/mosque_registration/data/services/mosque_rep
 import 'package:qurban_kit/features/admin_dashboard/data/services/admin_mosque_data_source.dart';
 import 'package:qurban_kit/features/auth/data/services/auth_data_source.dart';
 import 'package:qurban_kit/features/mosque_registration/data/services/mosque_data_source.dart';
+import 'package:qurban_kit/features/mosque_registration/data/services/wilayah_data_source.dart';
 
 final getIt = GetIt.instance;
 
@@ -21,6 +22,10 @@ void setupServiceLocator() {
 
   getIt.registerSingleton<MosqueDataSource>(
     MosqueDataSourceImpl(getIt<ApiClient>()),
+  );
+
+  getIt.registerSingleton<WilayahDataSource>(
+    WilayahDataSourceImpl(getIt<ApiClient>()),
   );
 
   getIt.registerSingleton<AdminMosqueDataSource>(
