@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import 'package:qurban_kit/core/configs/theme/theme.dart';
 import 'package:qurban_kit/core/services/service_locator.dart';
 import 'package:qurban_kit/core/services/user_role_service.dart';
+import 'package:qurban_kit/features/admin_dashboard/presentation/screens/admin_profile_tab.dart';
+import 'package:qurban_kit/features/auth/data/models/auth_models.dart';
 import 'package:qurban_kit/features/auth/data/services/auth_repository.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:qurban_kit/features/mosque_registration/data/models/wilayah_model.dart';
@@ -20,6 +22,7 @@ class MosqueRegistrationPage extends StatefulWidget {
 class _MosqueRegistrationPageState extends State<MosqueRegistrationPage> {
   final _formKey = GlobalKey<FormState>();
   final WilayahDataSource _wilayahDataSource = getIt<WilayahDataSource>();
+  late final Future<UserData?> _profileFuture;
   late TextEditingController _mosqueName;
   late TextEditingController _operationalNumber;
   late TextEditingController _address;
@@ -38,6 +41,7 @@ class _MosqueRegistrationPageState extends State<MosqueRegistrationPage> {
   String? _mosquePhotoPath;
   String? _skPhotoPath;
   bool _isLoading = false;
+  int _selectedIndex = 0;
 
   String? _selectedDistrict;
   String? _selectedVillage;
@@ -45,6 +49,7 @@ class _MosqueRegistrationPageState extends State<MosqueRegistrationPage> {
   @override
   void initState() {
     super.initState();
+    _profileFuture = getIt<AuthRepository>().getProfile();
     _mosqueName = TextEditingController();
     _operationalNumber = TextEditingController();
     _address = TextEditingController();
@@ -68,9 +73,7 @@ class _MosqueRegistrationPageState extends State<MosqueRegistrationPage> {
 
     try {
       final provinces = await future;
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) {}
 
       setState(() {
         _provinceOptions = provinces;
@@ -712,498 +715,514 @@ class _MosqueRegistrationPageState extends State<MosqueRegistrationPage> {
 
   @override
   Widget build(BuildContext context) {
+    const titles = ['Registrasi Masjid', 'Profil'];
+    final pages = [
+      _buildRegistrationContent(),
+      AdminProfileTab(profileFuture: _profileFuture, onLogout: _handleLogout),
+    ];
+
     return Scaffold(
+      backgroundColor: AppColors.backgroundBase,
       appBar: AppBar(
         backgroundColor: AppColors.essentialBrightAccent,
         foregroundColor: Colors.white,
-        title: const Text('Registrasi Masjid'),
+        title: Text(titles[_selectedIndex]),
         centerTitle: true,
         elevation: 0,
-        actions: [
-          IconButton(onPressed: _handleLogout, icon: const Icon(Icons.logout)),
-        ],
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          child: Form(
-            key: _formKey,
-            child: Card(
-              elevation: 2,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppRadius.md),
-              ),
-              margin: EdgeInsets.zero,
-              child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.lg),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Section title
-                    const Text(
-                      'Informasi Dasar Masjid',
-                      style: TextStyle(
-                        fontSize: AppTypography.headingMedium,
-                        fontWeight: AppTypography.semiBold,
-                        color: AppColors.textBase,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.xs),
-                    const Text(
-                      'Masukkan detail dasar masjid untuk diverikasi.',
-                      style: TextStyle(
-                        fontSize: AppTypography.bodyMedium,
-                        color: AppColors.textSubdued,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
+      body: IndexedStack(index: _selectedIndex, children: pages),
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: AppColors.backgroundElevatedBase,
+          border: Border(
+            top: BorderSide(color: AppColors.decorativeSubdued, width: 1),
+          ),
+        ),
+        child: BottomNavigationBar(
+          currentIndex: _selectedIndex,
+          onTap: (index) => setState(() => _selectedIndex = index),
+          backgroundColor: AppColors.backgroundElevatedBase,
+          selectedItemColor: AppColors.essentialBrightAccent,
+          unselectedItemColor: AppColors.essentialSubdued,
+          type: BottomNavigationBarType.fixed,
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.fact_check_outlined),
+              activeIcon: Icon(Icons.fact_check),
+              label: 'Registrasi',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person_outline_rounded),
+              activeIcon: Icon(Icons.person),
+              label: 'Profil',
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
-                    // Mosque name field
-                    Text(
-                      'Nama Masjid (*)',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: AppSpacing.xs),
-                    TextFormField(
-                      controller: _mosqueName,
-                      decoration: _inputDecoration(hint: 'Masjid Al-Barkah'),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Nama masjid tidak boleh kosong';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: AppSpacing.md),
+  Widget _buildRegistrationContent() {
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: Form(
+          key: _formKey,
+          child: Card(
+            elevation: 2,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+            ),
+            margin: EdgeInsets.zero,
+            child: Padding(
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Mosque name field
+                  Text(
+                    'Nama Masjid (*)',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  TextFormField(
+                    controller: _mosqueName,
+                    decoration: _inputDecoration(hint: 'Masjid Al-Barkah'),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Nama masjid tidak boleh kosong';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: AppSpacing.md),
 
-                    // Operational number field
-                    Text(
-                      'Nomor Izin Operasional / SK (*)',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: AppSpacing.xs),
-                    TextFormField(
-                      controller: _operationalNumber,
-                      decoration: _inputDecoration(hint: '001/SK-1234/V/2026'),
-                    ),
-                    const SizedBox(height: AppSpacing.md),
+                  // Operational number field
+                  Text(
+                    'Nomor Izin Operasional / SK (*)',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  TextFormField(
+                    controller: _operationalNumber,
+                    decoration: _inputDecoration(hint: '001/SK-1234/V/2026'),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
 
-                    // SK photo field
-                    Padding(
-                      padding: const EdgeInsets.only(top: AppSpacing.xs),
-                      child: _buildUploadField(
-                        label: 'Unggah Foto SK (*)',
-                        placeholder: 'Ketuk di Sini untuk mengunggah SK',
-                        currentPath: _skPhotoPath,
-                        onPick: () => _pickImage(isSK: true),
-                        onRemove: () => _removeImage(isSK: true),
-                      ),
+                  // SK photo field
+                  Padding(
+                    padding: const EdgeInsets.only(top: AppSpacing.xs),
+                    child: _buildUploadField(
+                      label: 'Unggah Foto SK (*)',
+                      placeholder: 'Ketuk di Sini untuk mengunggah SK',
+                      currentPath: _skPhotoPath,
+                      onPick: () => _pickImage(isSK: true),
+                      onRemove: () => _removeImage(isSK: true),
                     ),
-                    const SizedBox(height: AppSpacing.md),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
 
-                    // Mosque photo field
-                    Padding(
-                      padding: const EdgeInsets.only(top: AppSpacing.xs),
-                      child: _buildUploadField(
-                        label: 'Unggah Foto Masjid (*)',
-                        placeholder:
-                            'Ketuk di Sini untuk mengunggah foto masjid',
-                        currentPath: _mosquePhotoPath,
-                        onPick: () => _pickImage(isSK: false),
-                        onRemove: () => _removeImage(isSK: false),
-                      ),
+                  // Mosque photo field
+                  Padding(
+                    padding: const EdgeInsets.only(top: AppSpacing.xs),
+                    child: _buildUploadField(
+                      label: 'Unggah Foto Masjid (*)',
+                      placeholder: 'Ketuk di Sini untuk mengunggah foto masjid',
+                      currentPath: _mosquePhotoPath,
+                      onPick: () => _pickImage(isSK: false),
+                      onRemove: () => _removeImage(isSK: false),
                     ),
-                    const SizedBox(height: AppSpacing.md),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
 
-                    // Address field
-                    Text(
-                      'Alamat Lengkap Masjid (*)',
-                      style: Theme.of(context).textTheme.titleMedium,
+                  // Address field
+                  Text(
+                    'Alamat Lengkap Masjid (*)',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  TextFormField(
+                    controller: _address,
+                    maxLines: 2,
+                    decoration: _inputDecoration(
+                      hint: 'Jl. Kenanga No. 12, RT 01/RW 03...',
                     ),
-                    const SizedBox(height: AppSpacing.xs),
-                    TextFormField(
-                      controller: _address,
-                      maxLines: 2,
-                      decoration: _inputDecoration(
-                        hint: 'Jl. Kenanga No. 12, RT 01/RW 03...',
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Alamat masjid tidak boleh kosong';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: AppSpacing.md),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Alamat masjid tidak boleh kosong';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: AppSpacing.md),
 
-                    // Province selector
-                    Text(
-                      'Provinsi (*)',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: AppSpacing.xs),
-                    FormField<String>(
-                      initialValue: _selectedProvince,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Provinsi wajib dipilih';
-                        }
-                        return null;
-                      },
-                      builder: (state) {
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            InkWell(
-                              onTap: () async {
-                                final province = await _openWilayahPicker(
-                                  title: 'Pilih Provinsi',
-                                  searchHint: 'Cari provinsi, mis. yog',
-                                  optionsBuilder: () => _provinceOptions,
-                                  loadingFuture: _provinceLoadFuture,
-                                );
+                  // Province selector
+                  Text(
+                    'Provinsi (*)',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  FormField<String>(
+                    initialValue: _selectedProvince,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Provinsi wajib dipilih';
+                      }
+                      return null;
+                    },
+                    builder: (state) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          InkWell(
+                            onTap: () async {
+                              final province = await _openWilayahPicker(
+                                title: 'Pilih Provinsi',
+                                searchHint: 'Cari provinsi, mis. yog',
+                                optionsBuilder: () => _provinceOptions,
+                                loadingFuture: _provinceLoadFuture,
+                              );
 
-                                if (province == null) {
-                                  return;
-                                }
+                              if (province == null) {
+                                return;
+                              }
 
-                                setState(() {
-                                  _selectedProvince = province.id;
-                                  _selectedCity = null;
-                                  _selectedDistrict = null;
-                                  _selectedVillage = null;
-                                  _cityOptions = [];
-                                  _districtOptions = [];
-                                  _villageOptions = [];
-                                });
-                                state.didChange(province.id);
-                                _loadCities(province.id);
-                              },
-                              borderRadius: BorderRadius.circular(AppRadius.sm),
-                              child: InputDecorator(
-                                decoration: _inputDecoration(
-                                  hint: 'Pilih Provinsi',
-                                ),
-                                isEmpty: _selectedProvince == null,
-                                child: _selectedProvince == null
-                                    ? const SizedBox.shrink()
-                                    : Text(
-                                        _findOptionById(
-                                              _provinceOptions,
-                                              _selectedProvince,
-                                            )?.nama ??
-                                            '',
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                          color: AppColors.textBase,
-                                        ),
+                              setState(() {
+                                _selectedProvince = province.id;
+                                _selectedCity = null;
+                                _selectedDistrict = null;
+                                _selectedVillage = null;
+                                _cityOptions = [];
+                                _districtOptions = [];
+                                _villageOptions = [];
+                              });
+                              state.didChange(province.id);
+                              _loadCities(province.id);
+                            },
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
+                            child: InputDecorator(
+                              decoration: _inputDecoration(
+                                hint: 'Pilih Provinsi',
+                              ),
+                              isEmpty: _selectedProvince == null,
+                              child: _selectedProvince == null
+                                  ? const SizedBox.shrink()
+                                  : Text(
+                                      _findOptionById(
+                                            _provinceOptions,
+                                            _selectedProvince,
+                                          )?.nama ??
+                                          '',
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        color: AppColors.textBase,
                                       ),
-                              ),
+                                    ),
                             ),
-                            if (state.hasError)
-                              Padding(
-                                padding: const EdgeInsets.only(
-                                  top: AppSpacing.xs,
-                                ),
-                                child: Text(
-                                  state.errorText ?? '',
-                                  style: const TextStyle(
-                                    color: Colors.red,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ),
-                          ],
-                        );
-                      },
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-
-                    // City selector
-                    Text(
-                      'Kabupaten / Kota (*)',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: AppSpacing.xs),
-                    FormField<String>(
-                      initialValue: _selectedCity,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Kabupaten / kota wajib dipilih';
-                        }
-                        return null;
-                      },
-                      builder: (state) {
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            InkWell(
-                              onTap: _selectedProvince == null
-                                  ? null
-                                  : () async {
-                                      final city = await _openWilayahPicker(
-                                        title: 'Pilih Kabupaten / Kota',
-                                        searchHint: 'Cari kabupaten / kota',
-                                        optionsBuilder: () => _cityOptions,
-                                        loadingFuture: _cityLoadFuture,
-                                      );
-
-                                      if (city == null) {
-                                        return;
-                                      }
-
-                                      setState(() {
-                                        _selectedCity = city.id;
-                                        _selectedDistrict = null;
-                                        _selectedVillage = null;
-                                        _districtOptions = [];
-                                        _villageOptions = [];
-                                      });
-                                      state.didChange(city.id);
-                                      _loadDistricts(city.id);
-                                    },
-                              borderRadius: BorderRadius.circular(AppRadius.sm),
-                              child: InputDecorator(
-                                decoration: _inputDecoration(
-                                  hint: _selectedProvince == null
-                                      ? 'Pilih provinsi dulu'
-                                      : 'Pilih Kabupaten / Kota',
-                                ),
-                                isEmpty: _selectedCity == null,
-                                child: _selectedCity == null
-                                    ? const SizedBox.shrink()
-                                    : Text(
-                                        _findOptionById(
-                                              _cityOptions,
-                                              _selectedCity,
-                                            )?.nama ??
-                                            '',
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                          color: AppColors.textBase,
-                                        ),
-                                      ),
-                              ),
-                            ),
-                            if (state.hasError)
-                              Padding(
-                                padding: const EdgeInsets.only(
-                                  top: AppSpacing.xs,
-                                ),
-                                child: Text(
-                                  state.errorText ?? '',
-                                  style: const TextStyle(
-                                    color: Colors.red,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ),
-                          ],
-                        );
-                      },
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-
-                    // District selector
-                    Text(
-                      'Kecamatan (*)',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: AppSpacing.xs),
-                    FormField<String>(
-                      initialValue: _selectedDistrict,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Kecamatan wajib dipilih';
-                        }
-                        return null;
-                      },
-                      builder: (state) {
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            InkWell(
-                              onTap: _selectedCity == null
-                                  ? null
-                                  : () async {
-                                      final district = await _openWilayahPicker(
-                                        title: 'Pilih Kecamatan',
-                                        searchHint: 'Cari kecamatan',
-                                        optionsBuilder: () => _districtOptions,
-                                        loadingFuture: _districtLoadFuture,
-                                      );
-
-                                      if (district == null) {
-                                        return;
-                                      }
-
-                                      setState(() {
-                                        _selectedDistrict = district.id;
-                                        _selectedVillage = null;
-                                        _villageOptions = [];
-                                      });
-                                      state.didChange(district.id);
-                                      _loadVillages(district.id);
-                                    },
-                              borderRadius: BorderRadius.circular(AppRadius.sm),
-                              child: InputDecorator(
-                                decoration: _inputDecoration(
-                                  hint: _selectedCity == null
-                                      ? 'Pilih kabupaten dulu'
-                                      : 'Pilih Kecamatan',
-                                ),
-                                isEmpty: _selectedDistrict == null,
-                                child: _selectedDistrict == null
-                                    ? const SizedBox.shrink()
-                                    : Text(
-                                        _findOptionById(
-                                              _districtOptions,
-                                              _selectedDistrict,
-                                            )?.nama ??
-                                            '',
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                          color: AppColors.textBase,
-                                        ),
-                                      ),
-                              ),
-                            ),
-                            if (state.hasError)
-                              Padding(
-                                padding: const EdgeInsets.only(
-                                  top: AppSpacing.xs,
-                                ),
-                                child: Text(
-                                  state.errorText ?? '',
-                                  style: const TextStyle(
-                                    color: Colors.red,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ),
-                          ],
-                        );
-                      },
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-
-                    // Village selector
-                    Text(
-                      'Desa / Kelurahan (*)',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: AppSpacing.xs),
-                    FormField<String>(
-                      initialValue: _selectedVillage,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Desa / kelurahan wajib dipilih';
-                        }
-                        return null;
-                      },
-                      builder: (state) {
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            InkWell(
-                              onTap: _selectedDistrict == null
-                                  ? null
-                                  : () async {
-                                      final village = await _openWilayahPicker(
-                                        title: 'Pilih Desa / Kelurahan',
-                                        searchHint: 'Cari desa / kelurahan',
-                                        optionsBuilder: () => _villageOptions,
-                                        loadingFuture: _villageLoadFuture,
-                                      );
-
-                                      if (village == null) {
-                                        return;
-                                      }
-
-                                      setState(() {
-                                        _selectedVillage = village.id;
-                                      });
-                                      state.didChange(village.id);
-                                    },
-                              borderRadius: BorderRadius.circular(AppRadius.sm),
-                              child: InputDecorator(
-                                decoration: _inputDecoration(
-                                  hint: _selectedDistrict == null
-                                      ? 'Pilih kecamatan dulu'
-                                      : 'Pilih Desa / Kelurahan',
-                                ),
-                                isEmpty: _selectedVillage == null,
-                                child: _selectedVillage == null
-                                    ? const SizedBox.shrink()
-                                    : Text(
-                                        _findOptionById(
-                                              _villageOptions,
-                                              _selectedVillage,
-                                            )?.nama ??
-                                            '',
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                          color: AppColors.textBase,
-                                        ),
-                                      ),
-                              ),
-                            ),
-                            if (state.hasError)
-                              Padding(
-                                padding: const EdgeInsets.only(
-                                  top: AppSpacing.xs,
-                                ),
-                                child: Text(
-                                  state.errorText ?? '',
-                                  style: const TextStyle(
-                                    color: Colors.red,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ),
-                          ],
-                        );
-                      },
-                    ),
-                    const SizedBox(height: AppSpacing.xl),
-
-                    // Submit button
-                    SizedBox(
-                      width: double.infinity,
-                      height: 52,
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : _submitForm,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.essentialBrightAccent,
-                          elevation: 2,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(AppRadius.md),
                           ),
-                        ),
-                        child: _isLoading
-                            ? const SizedBox(
-                                height: 24,
-                                width: 24,
-                                child: CircularProgressIndicator(
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    Colors.white,
-                                  ),
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Text(
-                                'Kirim',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: AppTypography.bodyMedium,
-                                  fontWeight: AppTypography.medium,
+                          if (state.hasError)
+                            Padding(
+                              padding: const EdgeInsets.only(
+                                top: AppSpacing.xs,
+                              ),
+                              child: Text(
+                                state.errorText ?? '',
+                                style: const TextStyle(
+                                  color: Colors.red,
+                                  fontSize: 12,
                                 ),
                               ),
+                            ),
+                        ],
+                      );
+                    },
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+
+                  // City selector
+                  Text(
+                    'Kabupaten / Kota (*)',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  FormField<String>(
+                    initialValue: _selectedCity,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Kabupaten / kota wajib dipilih';
+                      }
+                      return null;
+                    },
+                    builder: (state) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          InkWell(
+                            onTap: _selectedProvince == null
+                                ? null
+                                : () async {
+                                    final city = await _openWilayahPicker(
+                                      title: 'Pilih Kabupaten / Kota',
+                                      searchHint: 'Cari kabupaten / kota',
+                                      optionsBuilder: () => _cityOptions,
+                                      loadingFuture: _cityLoadFuture,
+                                    );
+
+                                    if (city == null) {
+                                      return;
+                                    }
+
+                                    setState(() {
+                                      _selectedCity = city.id;
+                                      _selectedDistrict = null;
+                                      _selectedVillage = null;
+                                      _districtOptions = [];
+                                      _villageOptions = [];
+                                    });
+                                    state.didChange(city.id);
+                                    _loadDistricts(city.id);
+                                  },
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
+                            child: InputDecorator(
+                              decoration: _inputDecoration(
+                                hint: _selectedProvince == null
+                                    ? 'Pilih provinsi dulu'
+                                    : 'Pilih Kabupaten / Kota',
+                              ),
+                              isEmpty: _selectedCity == null,
+                              child: _selectedCity == null
+                                  ? const SizedBox.shrink()
+                                  : Text(
+                                      _findOptionById(
+                                            _cityOptions,
+                                            _selectedCity,
+                                          )?.nama ??
+                                          '',
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        color: AppColors.textBase,
+                                      ),
+                                    ),
+                            ),
+                          ),
+                          if (state.hasError)
+                            Padding(
+                              padding: const EdgeInsets.only(
+                                top: AppSpacing.xs,
+                              ),
+                              child: Text(
+                                state.errorText ?? '',
+                                style: const TextStyle(
+                                  color: Colors.red,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                        ],
+                      );
+                    },
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+
+                  // District selector
+                  Text(
+                    'Kecamatan (*)',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  FormField<String>(
+                    initialValue: _selectedDistrict,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Kecamatan wajib dipilih';
+                      }
+                      return null;
+                    },
+                    builder: (state) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          InkWell(
+                            onTap: _selectedCity == null
+                                ? null
+                                : () async {
+                                    final district = await _openWilayahPicker(
+                                      title: 'Pilih Kecamatan',
+                                      searchHint: 'Cari kecamatan',
+                                      optionsBuilder: () => _districtOptions,
+                                      loadingFuture: _districtLoadFuture,
+                                    );
+
+                                    if (district == null) {
+                                      return;
+                                    }
+
+                                    setState(() {
+                                      _selectedDistrict = district.id;
+                                      _selectedVillage = null;
+                                      _villageOptions = [];
+                                    });
+                                    state.didChange(district.id);
+                                    _loadVillages(district.id);
+                                  },
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
+                            child: InputDecorator(
+                              decoration: _inputDecoration(
+                                hint: _selectedCity == null
+                                    ? 'Pilih kabupaten dulu'
+                                    : 'Pilih Kecamatan',
+                              ),
+                              isEmpty: _selectedDistrict == null,
+                              child: _selectedDistrict == null
+                                  ? const SizedBox.shrink()
+                                  : Text(
+                                      _findOptionById(
+                                            _districtOptions,
+                                            _selectedDistrict,
+                                          )?.nama ??
+                                          '',
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        color: AppColors.textBase,
+                                      ),
+                                    ),
+                            ),
+                          ),
+                          if (state.hasError)
+                            Padding(
+                              padding: const EdgeInsets.only(
+                                top: AppSpacing.xs,
+                              ),
+                              child: Text(
+                                state.errorText ?? '',
+                                style: const TextStyle(
+                                  color: Colors.red,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                        ],
+                      );
+                    },
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+
+                  // Village selector
+                  Text(
+                    'Desa / Kelurahan (*)',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  FormField<String>(
+                    initialValue: _selectedVillage,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Desa / kelurahan wajib dipilih';
+                      }
+                      return null;
+                    },
+                    builder: (state) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          InkWell(
+                            onTap: _selectedDistrict == null
+                                ? null
+                                : () async {
+                                    final village = await _openWilayahPicker(
+                                      title: 'Pilih Desa / Kelurahan',
+                                      searchHint: 'Cari desa / kelurahan',
+                                      optionsBuilder: () => _villageOptions,
+                                      loadingFuture: _villageLoadFuture,
+                                    );
+
+                                    if (village == null) {
+                                      return;
+                                    }
+
+                                    setState(() {
+                                      _selectedVillage = village.id;
+                                    });
+                                    state.didChange(village.id);
+                                  },
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
+                            child: InputDecorator(
+                              decoration: _inputDecoration(
+                                hint: _selectedDistrict == null
+                                    ? 'Pilih kecamatan dulu'
+                                    : 'Pilih Desa / Kelurahan',
+                              ),
+                              isEmpty: _selectedVillage == null,
+                              child: _selectedVillage == null
+                                  ? const SizedBox.shrink()
+                                  : Text(
+                                      _findOptionById(
+                                            _villageOptions,
+                                            _selectedVillage,
+                                          )?.nama ??
+                                          '',
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        color: AppColors.textBase,
+                                      ),
+                                    ),
+                            ),
+                          ),
+                          if (state.hasError)
+                            Padding(
+                              padding: const EdgeInsets.only(
+                                top: AppSpacing.xs,
+                              ),
+                              child: Text(
+                                state.errorText ?? '',
+                                style: const TextStyle(
+                                  color: Colors.red,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                        ],
+                      );
+                    },
+                  ),
+                  const SizedBox(height: AppSpacing.xl),
+
+                  // Submit button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: ElevatedButton(
+                      onPressed: _isLoading ? null : _submitForm,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.essentialBrightAccent,
+                        elevation: 2,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                        ),
                       ),
+                      child: _isLoading
+                          ? const SizedBox(
+                              height: 24,
+                              width: 24,
+                              child: CircularProgressIndicator(
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Text(
+                              'Kirim',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: AppTypography.bodyMedium,
+                                fontWeight: AppTypography.medium,
+                              ),
+                            ),
                     ),
-                    const SizedBox(height: AppSpacing.lg),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                ],
               ),
             ),
           ),
