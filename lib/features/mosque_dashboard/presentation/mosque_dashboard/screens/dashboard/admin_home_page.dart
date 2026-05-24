@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:qurban_kit/core/configs/theme/theme.dart';
-import 'package:qurban_kit/core/services/service_locator.dart';
-import 'package:qurban_kit/core/services/user_role_service.dart';
 import 'package:qurban_kit/features/auth/data/models/auth_models.dart';
-import 'package:qurban_kit/features/mosque_dashboard/presentation/screens/profile/mosque_profile_page.dart';
 
 class AdminHomePage extends StatefulWidget {
   final UserData? user;
@@ -16,40 +13,9 @@ class AdminHomePage extends StatefulWidget {
 }
 
 class _AdminHomePageState extends State<AdminHomePage> {
-  late UserData? _user;
-
   @override
   void initState() {
     super.initState();
-    _user = widget.user;
-  }
-
-  Future<void> _logout() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Konfirmasi Logout'),
-        content: const Text('Apakah Anda yakin ingin keluar?'),
-        actions: [
-          TextButton(
-            onPressed: () => context.pop(false),
-            child: const Text('Batal'),
-          ),
-          TextButton(
-            onPressed: () => context.pop(true),
-            child: const Text('Keluar', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed ?? false) {
-      if (mounted) {
-        await authRepository.logout();
-        await UserRoleService.clearUserRoleData();
-        context.go('/auth');
-      }
-    }
   }
 
   @override
@@ -63,10 +29,6 @@ class _AdminHomePageState extends State<AdminHomePage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header with greeting and profile
-                _buildHeader(),
-                const SizedBox(height: AppSpacing.xl),
-
                 // Active period card
                 _buildActivePeriodCard(),
                 const SizedBox(height: AppSpacing.xl),
@@ -87,71 +49,6 @@ class _AdminHomePageState extends State<AdminHomePage> {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Selamat Pagi,',
-                style: TextStyle(
-                  fontSize: AppTypography.bodySmall,
-                  color: AppColors.textSubdued,
-                  fontWeight: AppTypography.regular,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.xs),
-              Text(
-                _user?.name ?? 'Admin Masjid',
-                style: const TextStyle(
-                  fontSize: AppTypography.headingLarge,
-                  fontWeight: AppTypography.bold,
-                  color: AppColors.textBase,
-                ),
-              ),
-            ],
-          ),
-        ),
-        Row(
-          children: [
-            // Profile avatar
-            GestureDetector(
-              onTap: () {
-                context.push('/mosque-profile', extra: _user);
-              },
-              onLongPress: _logout,
-              child: Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: AppColors.essentialBrightAccent,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: AppColors.essentialBrightAccent.withOpacity(0.3),
-                    width: 2,
-                  ),
-                ),
-                child: Center(
-                  child: Text(
-                    (_user?.name ?? 'A')[0].toUpperCase(),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: AppTypography.bold,
-                      fontSize: AppTypography.headingSmall,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ],
     );
   }
 
@@ -279,7 +176,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
   Widget _buildStatisticsSection() {
     return _buildCompactStatisticCard(
       icon: Icons.people_rounded,
-      title: 'Total recipients',
+      title: 'Total Mustahiq',
       value: '1,248',
       subtitle: 'Seluruh mustahiq terdaftar',
       backgroundColor: AppColors.essentialBrightAccent.withOpacity(0.1),
@@ -322,9 +219,9 @@ class _AdminHomePageState extends State<AdminHomePage> {
                 Text(
                   title,
                   style: TextStyle(
-                    fontSize: AppTypography.labelMedium,
+                    fontSize: AppTypography.bodyMedium,
                     fontWeight: AppTypography.semiBold,
-                    color: AppColors.textSubdued,
+                    color: AppColors.textBase,
                   ),
                 ),
                 const SizedBox(height: AppSpacing.xs),
@@ -352,56 +249,6 @@ class _AdminHomePageState extends State<AdminHomePage> {
     );
   }
 
-  Widget _buildStatisticCard({
-    required IconData icon,
-    required String title,
-    required String value,
-    required Color backgroundColor,
-    required Color iconColor,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: BoxDecoration(
-        color: AppColors.backgroundElevatedBase,
-        border: Border.all(color: AppColors.decorativeSubdued, width: 1),
-        borderRadius: BorderRadius.circular(AppRadius.md),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: backgroundColor,
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-            ),
-            child: Icon(icon, color: iconColor, size: 20),
-          ),
-          const SizedBox(height: AppSpacing.md),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: AppTypography.labelSmall,
-              fontWeight: AppTypography.semiBold,
-              color: AppColors.textSubdued,
-              letterSpacing: 0.2,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: AppTypography.displaySmall,
-              fontWeight: AppTypography.bold,
-              color: AppColors.textBase,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildQuickActionsSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -419,7 +266,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
           children: [
             _buildActionButton(
               icon: Icons.person_add_rounded,
-              label: 'Add Recipient',
+              label: 'Tambah Mustahiq',
               description: 'Masukkan mustahiq baru ke data distribusi',
               onTap: () {
                 context.push('/mosque-recipient-form');
@@ -428,8 +275,9 @@ class _AdminHomePageState extends State<AdminHomePage> {
             const SizedBox(height: AppSpacing.md),
             _buildActionButton(
               icon: Icons.calculate_rounded,
-              label: 'Calculate Qurban',
-              description: 'Hitung kebutuhan qurban dengan cepat',
+              label: 'Kalkulator Qurban',
+              description:
+                  'Hitung pembagian berat berdasarkan jumlah daging dan mustahiq',
               onTap: () {
                 context.push('/calculator-template-selection');
               },
@@ -479,7 +327,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
                   Text(
                     label,
                     style: const TextStyle(
-                      fontSize: AppTypography.bodyLarge,
+                      fontSize: AppTypography.bodyMedium,
                       fontWeight: AppTypography.semiBold,
                       color: AppColors.textBase,
                     ),

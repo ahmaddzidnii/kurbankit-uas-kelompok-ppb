@@ -49,14 +49,11 @@ class MosqueProfilePage extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: AppColors.backgroundBase,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.textBase),
-          onPressed: () => context.pop(),
-        ),
+
         title: const Text(
-          'QurbanKit',
+          'Informasi Profil',
           style: TextStyle(
-            color: AppColors.essentialBrightAccent,
+            color: AppColors.textBase,
             fontSize: AppTypography.headingMedium,
             fontWeight: AppTypography.semiBold,
           ),
@@ -103,18 +100,6 @@ class MosqueProfilePage extends StatelessWidget {
                       ),
                     ),
                   ),
-                  Container(
-                    padding: const EdgeInsets.all(AppSpacing.sm),
-                    decoration: const BoxDecoration(
-                      color: AppColors.essentialBrightAccent,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.edit_rounded,
-                      color: Colors.white,
-                      size: 18,
-                    ),
-                  ),
                 ],
               ),
               const SizedBox(height: AppSpacing.xl),
@@ -149,31 +134,26 @@ class MosqueProfilePage extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.xl),
               _buildInfoCard(
-                icon: Icons.person_outline_rounded,
-                title: 'Personal Info',
+                icon: Icons.person_rounded,
+                title: 'Informasi Pribadi',
                 children: [
-                  _buildInfoRow('Email Address', displayEmail),
+                  _buildInfoRow('Nama', displayName),
                   const SizedBox(height: AppSpacing.md),
-                  _buildInfoRow('Phone Number', '+62 812-3456-7890'),
+                  _buildInfoRow('Email', displayEmail),
                 ],
               ),
               const SizedBox(height: AppSpacing.lg),
               _buildInfoCard(
                 icon: Icons.mosque_rounded,
-                title: 'Institution',
+                title: 'Informasi Masjid',
                 children: [
-                  _buildInfoRow('Assigned Mosque', 'Masjid Al-Ihsan'),
+                  _buildInfoRow('Nama', 'Masjid Al-Ihsan'),
                   const SizedBox(height: AppSpacing.md),
-                  _buildInfoRow('Status', 'Active'),
+                  _buildInfoRow('Alamat', 'Jl. Merdeka No.123, Jakarta'),
                 ],
               ),
-              const SizedBox(height: AppSpacing.xl),
-              _buildNavTile(
-                icon: Icons.help_outline_rounded,
-                title: 'Help & Support',
-                onTap: () {},
-              ),
-              const SizedBox(height: AppSpacing.xl),
+
+              const SizedBox(height: AppSpacing.lg),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
@@ -191,7 +171,7 @@ class MosqueProfilePage extends StatelessWidget {
                     backgroundColor: const Color(0xFFFFE3E3),
                     elevation: 0,
                     padding: const EdgeInsets.symmetric(
-                      vertical: AppSpacing.lg,
+                      vertical: AppSpacing.sm,
                     ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(AppRadius.md),
@@ -224,7 +204,15 @@ class MosqueProfilePage extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(icon, color: AppColors.essentialBrightAccent),
+              SizedBox(
+                width: 24,
+                height: 24,
+                child: Icon(
+                  icon,
+                  size: 20,
+                  color: AppColors.essentialBrightAccent,
+                ),
+              ),
               const SizedBox(width: AppSpacing.sm),
               Text(
                 title,
@@ -265,39 +253,6 @@ class MosqueProfilePage extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildNavTile({
-    required IconData icon,
-    required String title,
-    required VoidCallback onTap,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.sm,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.backgroundElevatedBase,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.decorativeSubdued),
-      ),
-      child: ListTile(
-        dense: true,
-        contentPadding: EdgeInsets.zero,
-        leading: Icon(icon, color: AppColors.textBase),
-        title: Text(
-          title,
-          style: const TextStyle(
-            fontSize: AppTypography.bodyMedium,
-            fontWeight: AppTypography.semiBold,
-            color: AppColors.textBase,
-          ),
-        ),
-        trailing: const Icon(Icons.chevron_right_rounded),
-        onTap: onTap,
-      ),
     );
   }
 }

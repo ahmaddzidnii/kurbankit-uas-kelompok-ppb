@@ -7,7 +7,7 @@ import 'package:qurban_kit/features/auth/data/models/auth_models.dart';
 import 'package:qurban_kit/features/mosque_dashboard/presentation/mosque_dashboard/screens/dashboard/admin_home_page.dart';
 import 'package:qurban_kit/features/mosque_dashboard/presentation/screens/periods/periods_page.dart';
 import 'package:qurban_kit/features/mosque_dashboard/presentation/screens/recipients/recipients_page.dart';
-import 'package:qurban_kit/features/mosque_dashboard/presentation/screens/settings/mosque_settings_page.dart';
+import 'package:qurban_kit/features/mosque_dashboard/presentation/screens/profile/mosque_profile_page.dart';
 
 class MosqueAdminDashboard extends StatefulWidget {
   final UserData? initialUser;
@@ -82,7 +82,7 @@ class _MosqueAdminDashboardState extends State<MosqueAdminDashboard> {
       AdminHomePage(user: _user),
       const PeriodsPage(),
       const RecipientsPage(),
-      MosqueSettingsPage(user: _user),
+      MosqueProfilePage(user: _user),
     ];
 
     return Scaffold(
@@ -112,7 +112,7 @@ class _MosqueAdminDashboardState extends State<MosqueAdminDashboard> {
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home_rounded),
-            label: 'Home',
+            label: 'Beranda',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.calendar_month_rounded),
@@ -120,11 +120,11 @@ class _MosqueAdminDashboardState extends State<MosqueAdminDashboard> {
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.people_rounded),
-            label: 'Participant',
+            label: 'Mustahiq',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.settings_rounded),
-            label: 'Settings',
+            icon: Icon(Icons.person_rounded),
+            label: 'Profil',
           ),
         ],
       ),

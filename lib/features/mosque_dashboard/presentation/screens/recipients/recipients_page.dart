@@ -139,10 +139,10 @@ class _RecipientsPageState extends State<RecipientsPage> {
       backgroundColor: AppColors.backgroundBase,
       elevation: 0,
       title: const Text(
-        'Penerima',
+        'Mustahiq',
         style: TextStyle(
           fontSize: AppTypography.headingLarge,
-          fontWeight: AppTypography.bold,
+          fontWeight: AppTypography.semiBold,
           color: AppColors.textBase,
         ),
       ),
@@ -284,7 +284,6 @@ class _RecipientsPageState extends State<RecipientsPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Expanded(
                         child: Text(
@@ -296,6 +295,7 @@ class _RecipientsPageState extends State<RecipientsPage> {
                           ),
                         ),
                       ),
+                      const SizedBox(width: AppSpacing.sm),
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: AppSpacing.sm,
@@ -323,34 +323,17 @@ class _RecipientsPageState extends State<RecipientsPage> {
                     ],
                   ),
                   const SizedBox(height: AppSpacing.xs),
-                  Row(
+                  Wrap(
+                    spacing: AppSpacing.md,
+                    runSpacing: AppSpacing.xs,
                     children: [
-                      Icon(
-                        Icons.category_rounded,
-                        size: 14,
-                        color: AppColors.textSubdued,
+                      _buildMetaItem(
+                        icon: Icons.category_rounded,
+                        text: recipient['category'],
                       ),
-                      const SizedBox(width: 4),
-                      Text(
-                        recipient['category'],
-                        style: TextStyle(
-                          fontSize: AppTypography.bodySmall,
-                          color: AppColors.textSubdued,
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.md),
-                      Icon(
-                        Icons.phone_rounded,
-                        size: 14,
-                        color: AppColors.textSubdued,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        recipient['phone'],
-                        style: TextStyle(
-                          fontSize: AppTypography.bodySmall,
-                          color: AppColors.textSubdued,
-                        ),
+                      _buildMetaItem(
+                        icon: Icons.phone_rounded,
+                        text: recipient['phone'],
                       ),
                     ],
                   ),
@@ -366,6 +349,23 @@ class _RecipientsPageState extends State<RecipientsPage> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildMetaItem({required IconData icon, required String text}) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 14, color: AppColors.textSubdued),
+        const SizedBox(width: 4),
+        Text(
+          text,
+          style: TextStyle(
+            fontSize: AppTypography.bodySmall,
+            color: AppColors.textSubdued,
+          ),
+        ),
+      ],
     );
   }
 

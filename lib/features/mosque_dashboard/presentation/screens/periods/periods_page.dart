@@ -50,23 +50,6 @@ class _PeriodsPageState extends State<PeriodsPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Halaman Periode Kurban',
-                  style: TextStyle(
-                    fontSize: AppTypography.displaySmall,
-                    fontWeight: AppTypography.bold,
-                    color: AppColors.textBase,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.md),
-                Text(
-                  'Kelola semua periode kurban dan pantau perkembangan setiap periode',
-                  style: TextStyle(
-                    fontSize: AppTypography.bodyMedium,
-                    color: AppColors.textSubdued,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.xl),
                 ListView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
@@ -85,6 +68,9 @@ class _PeriodsPageState extends State<PeriodsPage> {
       ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: AppColors.essentialBrightAccent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.full),
+        ),
         onPressed: () {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Tambah Periode - Coming Soon')),
@@ -103,7 +89,7 @@ class _PeriodsPageState extends State<PeriodsPage> {
         'Periode',
         style: TextStyle(
           fontSize: AppTypography.headingLarge,
-          fontWeight: AppTypography.bold,
+          fontWeight: AppTypography.semiBold,
           color: AppColors.textBase,
         ),
       ),
