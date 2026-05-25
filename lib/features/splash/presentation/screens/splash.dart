@@ -41,7 +41,7 @@ class _SplashPageState extends State<SplashPage> {
     final isNewUser = await OnboardingService.isNewUser();
     final isLoggedIn = await OnboardingService.isUserLoggedIn();
 
-    String? nextRoute;
+    late String nextRoute;
     UserData? profileUser;
 
     if (isNewUser) {
@@ -86,15 +86,13 @@ class _SplashPageState extends State<SplashPage> {
     }
 
     if (!mounted) return;
-    if (nextRoute != null) {
-      if (nextRoute == '/mosque-registration-rejected' &&
-          profileUser?.masjid != null) {
-        context.go(nextRoute, extra: profileUser!.masjid);
-        return;
-      }
-
-      context.go(nextRoute);
+    if (nextRoute == '/mosque-registration-rejected' &&
+        profileUser?.masjid != null) {
+      context.go(nextRoute, extra: profileUser!.masjid);
+      return;
     }
+
+    context.go(nextRoute);
   }
 
   @override

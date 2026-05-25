@@ -5,9 +5,9 @@ import 'package:qurban_kit/core/services/calculator_service.dart';
 import 'package:qurban_kit/features/qurban_distribution/data/models/calculator_models.dart';
 
 class CalculatorResultPage extends StatefulWidget {
-  final CalculatorResult result;
+  final CalculatorComparisonResult comparisonResult;
 
-  const CalculatorResultPage({super.key, required this.result});
+  const CalculatorResultPage({super.key, required this.comparisonResult});
 
   @override
   State<CalculatorResultPage> createState() => _CalculatorResultPageState();
@@ -15,7 +15,7 @@ class CalculatorResultPage extends StatefulWidget {
 
 class _CalculatorResultPageState extends State<CalculatorResultPage>
     with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+  late final TabController _tabController;
 
   @override
   void initState() {
@@ -51,7 +51,6 @@ class _CalculatorResultPageState extends State<CalculatorResultPage>
       ),
       body: Column(
         children: [
-          // Tab bar
           TabBar(
             controller: _tabController,
             labelColor: AppColors.essentialBrightAccent,
@@ -62,12 +61,21 @@ class _CalculatorResultPageState extends State<CalculatorResultPage>
               Tab(text: 'Kambing'),
             ],
           ),
-
-          // Content
           Expanded(
             child: TabBarView(
               controller: _tabController,
-              children: [_buildResultTab(), _buildResultTab()],
+              children: [
+                _buildResultTab(
+                  title: 'Hasil Sapi',
+                  result: widget.comparisonResult.sapiResult,
+                  emptyMessage: 'Tidak ada input sapi pada sesi ini.',
+                ),
+                _buildResultTab(
+                  title: 'Hasil Kambing',
+                  result: widget.comparisonResult.kambingResult,
+                  emptyMessage: 'Tidak ada input kambing pada sesi ini.',
+                ),
+              ],
             ),
           ),
         ],
@@ -75,19 +83,24 @@ class _CalculatorResultPageState extends State<CalculatorResultPage>
     );
   }
 
-  Widget _buildResultTab() {
-    final totalWeight = widget.result.totalWeight;
+  Widget _buildResultTab({
+    required String title,
+    required CalculatorResult? result,
+    required String emptyMessage,
+  }) {
+    if (result == null) {
+      return _buildEmptyState(title: title, message: emptyMessage);
+    }
+
+    final totalWeight = result.totalWeight;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Progress
-          _buildProgressIndicator(),
+          _buildProgressIndicator(result),
           const SizedBox(height: AppSpacing.xl),
-
-          // Main result card
           Container(
             padding: const EdgeInsets.all(AppSpacing.lg),
             decoration: BoxDecoration(
@@ -102,7 +115,7 @@ class _CalculatorResultPageState extends State<CalculatorResultPage>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Total Estimasi Daging',
+                  title,
                   style: TextStyle(
                     fontSize: AppTypography.bodyMedium,
                     color: Colors.white.withValues(alpha: 0.9),
@@ -147,7 +160,7 @@ class _CalculatorResultPageState extends State<CalculatorResultPage>
                       ),
                       const SizedBox(width: AppSpacing.sm),
                       Text(
-                        'Ready to distribute in ${widget.result.totalBags} bags',
+                        'Ready to distribute in ${result.totalBags} bags',
                         style: const TextStyle(
                           fontSize: AppTypography.bodySmall,
                           fontWeight: AppTypography.semiBold,
@@ -161,8 +174,6 @@ class _CalculatorResultPageState extends State<CalculatorResultPage>
             ),
           ),
           const SizedBox(height: AppSpacing.xl),
-
-          // Detail pembagian
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -174,31 +185,18 @@ class _CalculatorResultPageState extends State<CalculatorResultPage>
                   color: AppColors.textBase,
                 ),
               ),
-              GestureDetector(
-                onTap: () {
-                  // Show filter/sort options
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Filter option - Coming Soon'),
-                    ),
-                  );
-                },
-                child: const Icon(
-                  Icons.tune_rounded,
-                  color: AppColors.essentialBrightAccent,
-                ),
+              const Icon(
+                Icons.tune_rounded,
+                color: AppColors.essentialBrightAccent,
               ),
             ],
           ),
           const SizedBox(height: AppSpacing.md),
-
-          // Detail items
-          ...widget.result.allocations.entries.map((entry) {
+          ...result.allocations.entries.map((entry) {
             final categoryName = entry.key;
             final allocation = entry.value;
-            final recipientCount =
-                widget.result.recipientCounts[categoryName] ?? 0;
-            final perBagWeight = widget.result.perBagWeight[categoryName] ?? 0;
+            final recipientCount = result.recipientCounts[categoryName] ?? 0;
+            final perBagWeight = result.perBagWeight[categoryName] ?? 0;
 
             return Padding(
               padding: const EdgeInsets.only(bottom: AppSpacing.lg),
@@ -210,132 +208,330 @@ class _CalculatorResultPageState extends State<CalculatorResultPage>
               ),
             );
           }),
-
-          // Allocation progress
-          _buildAllocationProgress(),
+          _buildAllocationProgress(result),
           const SizedBox(height: AppSpacing.xl),
+          _buildNoteCard(result),
+          const SizedBox(height: AppSpacing.xl),
+          _buildActionButtons(),
+          const SizedBox(height: AppSpacing.lg),
+        ],
+      ),
+    );
+  }
 
-          // Catatan Perhitungan
-          Container(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            decoration: BoxDecoration(
-              color: AppColors.essentialBrightAccent.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.info_rounded,
-                      color: AppColors.essentialBrightAccent,
-                      size: 20,
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Text(
-                      'Catatan Perhitungan',
-                      style: TextStyle(
-                        fontSize: AppTypography.bodyMedium,
-                        fontWeight: AppTypography.semiBold,
-                        color: AppColors.essentialBrightAccent,
-                      ),
-                    ),
-                  ],
+  Widget _buildEmptyState({required String title, required String message}) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(AppSpacing.xl),
+          decoration: BoxDecoration(
+            color: AppColors.backgroundElevatedBase,
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            border: Border.all(color: AppColors.decorativeSubdued),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.inbox_rounded,
+                size: 56,
+                color: AppColors.essentialBrightAccent,
+              ),
+              const SizedBox(height: AppSpacing.md),
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: AppTypography.headingMedium,
+                  fontWeight: AppTypography.semiBold,
+                  color: AppColors.textBase,
                 ),
-                const SizedBox(height: AppSpacing.md),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: AppTypography.bodyMedium,
+                  color: AppColors.textSubdued,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProgressIndicator(CalculatorResult result) {
+    final percentage = result.allocations.isEmpty
+        ? 0.0
+        : result.allocations.values.fold<double>(
+                0,
+                (sum, value) => sum + value,
+              ) /
+              result.totalWeight;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Ringkasan per Tab',
+              style: TextStyle(
+                fontSize: AppTypography.bodySmall,
+                color: AppColors.textSubdued,
+                fontWeight: AppTypography.semiBold,
+              ),
+            ),
+            Text(
+              '${(percentage * 100).toStringAsFixed(0)}% Complete',
+              style: TextStyle(
+                fontSize: AppTypography.bodySmall,
+                fontWeight: AppTypography.semiBold,
+                color: AppColors.essentialBrightAccent,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(AppRadius.xs),
+          child: LinearProgressIndicator(
+            value: 1.0,
+            minHeight: 6,
+            backgroundColor: AppColors.backgroundElevatedBase,
+            valueColor: const AlwaysStoppedAnimation<Color>(
+              AppColors.essentialBrightAccent,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNoteCard(CalculatorResult result) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.essentialBrightAccent.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.info_rounded,
+                color: AppColors.essentialBrightAccent,
+                size: 20,
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Text(
+                'Catatan Perhitungan',
+                style: TextStyle(
+                  fontSize: AppTypography.bodyMedium,
+                  fontWeight: AppTypography.semiBold,
+                  color: AppColors.essentialBrightAccent,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Text(
+            _buildCalculationNote(result.templateId),
+            style: TextStyle(
+              fontSize: AppTypography.bodySmall,
+              color: AppColors.textBase,
+              height: 1.6,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAllocationProgress(CalculatorResult result) {
+    final allocationEntries = result.allocations.entries.toList();
+    final totalAllocated = result.allocations.values.fold<double>(
+      0,
+      (sum, value) => sum + value,
+    );
+    final ratio = result.totalWeight <= 0
+        ? 0.0
+        : totalAllocated / result.totalWeight;
+
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.essentialBrightAccent.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Allocation Progress',
+                style: TextStyle(
+                  fontSize: AppTypography.bodyMedium,
+                  fontWeight: AppTypography.semiBold,
+                  color: AppColors.textBase,
+                ),
+              ),
+              Text(
+                'TOTAL PERSENTASE: ${(ratio * 100).toStringAsFixed(0)}%',
+                style: TextStyle(
+                  fontSize: AppTypography.labelSmall,
+                  fontWeight: AppTypography.semiBold,
+                  color: AppColors.essentialBrightAccent,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(AppRadius.xs),
+            child: LinearProgressIndicator(
+              value: ratio.clamp(0.0, 1.0).toDouble(),
+              minHeight: 8,
+              backgroundColor: AppColors.decorativeSubdued,
+              valueColor: const AlwaysStoppedAnimation<Color>(
+                AppColors.essentialBrightAccent,
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Wrap(
+            spacing: AppSpacing.md,
+            runSpacing: AppSpacing.sm,
+            children: allocationEntries.map((entry) {
+              final percentage = result.totalWeight <= 0
+                  ? 0
+                  : (entry.value / result.totalWeight * 100).toStringAsFixed(0);
+              return Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 12,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      color: AppColors.essentialBrightAccent,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.xs),
+                  Text(
+                    '${entry.key} $percentage%',
+                    style: TextStyle(
+                      fontSize: AppTypography.labelSmall,
+                      color: AppColors.textSubdued,
+                    ),
+                  ),
+                ],
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionButtons() {
+    return Column(
+      children: [
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Hasil telah disimpan')),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.essentialBrightAccent,
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppRadius.md),
+              ),
+            ),
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.save_rounded, color: Colors.white),
+                SizedBox(width: AppSpacing.sm),
                 Text(
-                  'Estimasi karkas dihitung berdasarkan 50% dari berat hidup rata-rata. Pembagian sudah menyertakan alokasi 1/3 bagian untuk Shohibul.',
+                  'Simpan Data',
                   style: TextStyle(
-                    fontSize: AppTypography.bodySmall,
-                    color: AppColors.textBase,
-                    height: 1.6,
+                    color: Colors.white,
+                    fontSize: AppTypography.bodyMedium,
+                    fontWeight: AppTypography.semiBold,
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: AppSpacing.xl),
-
-          // Action buttons
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Hasil telah disimpan')),
-                );
-                context.pop();
-                context.pop();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.essentialBrightAccent,
-                padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton(
+            onPressed: () {
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text('Hasil dibagikan')));
+            },
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppRadius.md),
               ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.save_rounded, color: Colors.white),
-                  SizedBox(width: AppSpacing.sm),
-                  Text(
-                    'Simpan Data',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: AppTypography.bodyMedium,
-                      fontWeight: AppTypography.semiBold,
-                    ),
-                  ),
-                ],
+              side: const BorderSide(
+                color: AppColors.essentialBrightAccent,
+                width: 2,
               ),
             ),
-          ),
-          const SizedBox(height: AppSpacing.md),
-
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Hasil dibagikan')),
-                );
-              },
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                ),
-                side: const BorderSide(
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.share_rounded,
                   color: AppColors.essentialBrightAccent,
-                  width: 2,
                 ),
-              ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.share_rounded,
+                SizedBox(width: AppSpacing.sm),
+                Text(
+                  'Bagikan Hasil',
+                  style: TextStyle(
                     color: AppColors.essentialBrightAccent,
+                    fontSize: AppTypography.bodyMedium,
+                    fontWeight: AppTypography.semiBold,
                   ),
-                  SizedBox(width: AppSpacing.sm),
-                  Text(
-                    'Bagikan Hasil',
-                    style: TextStyle(
-                      color: AppColors.essentialBrightAccent,
-                      fontSize: AppTypography.bodyMedium,
-                      fontWeight: AppTypography.semiBold,
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: AppSpacing.lg),
-        ],
-      ),
+        ),
+      ],
     );
+  }
+
+  String _buildCalculationNote(String templateId) {
+    switch (templateId) {
+      case 'template_a':
+        return 'Perhitungan pada tab ini mengikuti bobot yang dimasukkan untuk sapi atau kambing secara terpisah, lalu dibagi menjadi 1/3 untuk Shohibul, 1/3 untuk Fakir Miskin, dan 1/3 untuk Warga Umum.';
+      case 'template_b':
+        return 'Perhitungan pada tab ini mengikuti bobot yang dimasukkan untuk sapi atau kambing secara terpisah, lalu dibagi menjadi 1/3 untuk Shohibul dan 2/3 untuk Masyarakat.';
+      case 'template_c':
+        return 'Perhitungan pada tab ini mengikuti bobot yang dimasukkan untuk sapi atau kambing secara terpisah dan persentase musyawarah harus total 100%.';
+      default:
+        return 'Perhitungan pada tab ini mengikuti bobot yang dimasukkan secara terpisah.';
+    }
   }
 
   Widget _buildDetailItem({
@@ -354,7 +550,6 @@ class _CalculatorResultPageState extends State<CalculatorResultPage>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Category header
           Row(
             children: [
               Container(
@@ -416,8 +611,6 @@ class _CalculatorResultPageState extends State<CalculatorResultPage>
             ],
           ),
           const SizedBox(height: AppSpacing.md),
-
-          // Total allocation
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -441,128 +634,6 @@ class _CalculatorResultPageState extends State<CalculatorResultPage>
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildAllocationProgress() {
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: AppColors.essentialBrightAccent.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Allocation Progress',
-                style: TextStyle(
-                  fontSize: AppTypography.bodyMedium,
-                  fontWeight: AppTypography.semiBold,
-                  color: AppColors.textBase,
-                ),
-              ),
-              Text(
-                'TOTAL PERSENTASE: ${widget.result.allocations.values.fold<double>(0, (sum, val) => sum + (val / widget.result.totalWeight * 100)).toStringAsFixed(0)}%',
-                style: TextStyle(
-                  fontSize: AppTypography.labelSmall,
-                  fontWeight: AppTypography.semiBold,
-                  color: AppColors.essentialBrightAccent,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.md),
-
-          // Progress bar
-          ClipRRect(
-            borderRadius: BorderRadius.circular(AppRadius.xs),
-            child: LinearProgressIndicator(
-              value: 1.0,
-              minHeight: 8,
-              backgroundColor: AppColors.decorativeSubdued,
-              valueColor: const AlwaysStoppedAnimation<Color>(
-                AppColors.essentialBrightAccent,
-              ),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.md),
-
-          // Legend
-          Wrap(
-            spacing: AppSpacing.md,
-            runSpacing: AppSpacing.sm,
-            children: widget.result.allocations.entries.map((entry) {
-              final percentage = (entry.value / widget.result.totalWeight * 100)
-                  .toStringAsFixed(0);
-              return Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 12,
-                    height: 12,
-                    decoration: BoxDecoration(
-                      color: AppColors.essentialBrightAccent,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  Text(
-                    '${entry.key} ($percentage%)',
-                    style: TextStyle(
-                      fontSize: AppTypography.labelSmall,
-                      color: AppColors.textBase,
-                    ),
-                  ),
-                ],
-              );
-            }).toList(),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProgressIndicator() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              'Langkah Terakhir',
-              style: TextStyle(
-                fontSize: AppTypography.bodySmall,
-                color: AppColors.textSubdued,
-              ),
-            ),
-            Text(
-              '4/4',
-              style: TextStyle(
-                fontSize: AppTypography.bodySmall,
-                fontWeight: AppTypography.semiBold,
-                color: AppColors.essentialBrightAccent,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(AppRadius.xs),
-          child: const LinearProgressIndicator(
-            value: 1.0,
-            minHeight: 6,
-            backgroundColor: AppColors.backgroundElevatedBase,
-            valueColor: AlwaysStoppedAnimation<Color>(
-              AppColors.essentialBrightAccent,
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

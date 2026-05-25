@@ -15,63 +15,79 @@ class CalculatorInputPage extends StatefulWidget {
 
 class _CalculatorInputPageState extends State<CalculatorInputPage>
     with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+  late final TabController _tabController;
 
-  // Animal data
-  late List<AnimalData> animals;
-  final sapiController = TextEditingController();
-  final kambingController = TextEditingController();
+  final sapiWeightController = TextEditingController();
+  final kambingWeightController = TextEditingController();
 
-  // Recipient counts
-  late Map<String, int> recipientCounts;
   late List<RecipientCategory> categories;
-  late Map<String, TextEditingController> categoryControllers;
 
-  // Custom template percentages
-  late Map<String, double> customPercentages;
-  late Map<String, TextEditingController> percentageControllers;
+  late Map<String, int> sapiRecipientCounts;
+  late Map<String, int> kambingRecipientCounts;
+  late Map<String, TextEditingController> sapiCategoryControllers;
+  late Map<String, TextEditingController> kambingCategoryControllers;
+  late Map<String, double> sapiCustomPercentages;
+  late Map<String, double> kambingCustomPercentages;
+  late Map<String, TextEditingController> sapiPercentageControllers;
+  late Map<String, TextEditingController> kambingPercentageControllers;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-
-    // Initialize animals
-    animals = [
-      AnimalData(type: 'Sapi', weight: 300),
-      AnimalData(type: 'Kambing', weight: 50),
-    ];
-
-    // Initialize categories based on template
     categories = CalculatorService.getDefaultCategories(widget.templateId);
-    categoryControllers = {};
-    recipientCounts = {};
 
-    for (var category in categories) {
-      categoryControllers[category.name] = TextEditingController();
-      recipientCounts[category.name] = 0;
+    sapiRecipientCounts = {};
+    kambingRecipientCounts = {};
+    sapiCategoryControllers = {};
+    kambingCategoryControllers = {};
+    sapiCustomPercentages = {};
+    kambingCustomPercentages = {};
+    sapiPercentageControllers = {};
+    kambingPercentageControllers = {};
+
+    _initializeSpeciesState();
+  }
+
+  void _initializeSpeciesState() {
+    for (final category in categories) {
+      sapiRecipientCounts[category.name] = 0;
+      kambingRecipientCounts[category.name] = 0;
+      sapiCategoryControllers[category.name] = TextEditingController();
+      kambingCategoryControllers[category.name] = TextEditingController();
+      sapiCustomPercentages[category.name] = 0;
+      kambingCustomPercentages[category.name] = 0;
+      sapiPercentageControllers[category.name] = TextEditingController();
+      kambingPercentageControllers[category.name] = TextEditingController();
     }
-
-    // Initialize custom percentages for template C
-    customPercentages = {};
-    percentageControllers = {};
   }
 
   @override
   void dispose() {
     _tabController.dispose();
-    sapiController.dispose();
-    kambingController.dispose();
-    categoryControllers.forEach((_, controller) => controller.dispose());
-    percentageControllers.forEach((_, controller) => controller.dispose());
+    sapiWeightController.dispose();
+    kambingWeightController.dispose();
+    for (final controller in sapiCategoryControllers.values) {
+      controller.dispose();
+    }
+    for (final controller in kambingCategoryControllers.values) {
+      controller.dispose();
+    }
+    for (final controller in sapiPercentageControllers.values) {
+      controller.dispose();
+    }
+    for (final controller in kambingPercentageControllers.values) {
+      controller.dispose();
+    }
     super.dispose();
   }
 
   void _addCategoryForTemplateC() {
     showDialog(
       context: context,
-      builder: (context) {
+      builder: (dialogContext) {
         final nameController = TextEditingController();
+
         return AlertDialog(
           title: const Text('Tambah Kategori'),
           content: TextField(
@@ -83,30 +99,43 @@ class _CalculatorInputPageState extends State<CalculatorInputPage>
           ),
           actions: [
             TextButton(
-              onPressed: () => context.pop(),
+              onPressed: () => dialogContext.pop(),
               child: const Text('Batal'),
             ),
             TextButton(
               onPressed: () {
-                if (nameController.text.isNotEmpty) {
-                  setState(() {
-                    final newCategory = RecipientCategory(
-                      name: nameController.text,
+                final categoryName = nameController.text.trim();
+                if (categoryName.isEmpty ||
+                    categories.any((item) => item.name == categoryName)) {
+                  return;
+                }
+
+                setState(() {
+                  categories = [
+                    ...categories,
+                    RecipientCategory(
+                      name: categoryName,
                       icon: '👥',
                       description: '',
                       count: 0,
-                      percentage: 0,
-                    );
-                    categories.add(newCategory);
-                    categoryControllers[newCategory.name] =
-                        TextEditingController();
-                    recipientCounts[newCategory.name] = 0;
-                    customPercentages[newCategory.name] = 0;
-                    percentageControllers[newCategory.name] =
-                        TextEditingController();
-                  });
-                  context.pop();
-                }
+                    ),
+                  ];
+
+                  sapiRecipientCounts[categoryName] = 0;
+                  kambingRecipientCounts[categoryName] = 0;
+                  sapiCategoryControllers[categoryName] =
+                      TextEditingController();
+                  kambingCategoryControllers[categoryName] =
+                      TextEditingController();
+                  sapiCustomPercentages[categoryName] = 0;
+                  kambingCustomPercentages[categoryName] = 0;
+                  sapiPercentageControllers[categoryName] =
+                      TextEditingController();
+                  kambingPercentageControllers[categoryName] =
+                      TextEditingController();
+                });
+
+                dialogContext.pop();
               },
               child: const Text('Tambah'),
             ),
@@ -118,42 +147,98 @@ class _CalculatorInputPageState extends State<CalculatorInputPage>
 
   void _removeCategory(String categoryName) {
     setState(() {
-      categories.removeWhere((c) => c.name == categoryName);
-      categoryControllers[categoryName]?.dispose();
-      categoryControllers.remove(categoryName);
-      recipientCounts.remove(categoryName);
-      customPercentages.remove(categoryName);
-      percentageControllers[categoryName]?.dispose();
-      percentageControllers.remove(categoryName);
+      categories.removeWhere((category) => category.name == categoryName);
+      sapiCategoryControllers[categoryName]?.dispose();
+      kambingCategoryControllers[categoryName]?.dispose();
+      sapiPercentageControllers[categoryName]?.dispose();
+      kambingPercentageControllers[categoryName]?.dispose();
+      sapiCategoryControllers.remove(categoryName);
+      kambingCategoryControllers.remove(categoryName);
+      sapiPercentageControllers.remove(categoryName);
+      kambingPercentageControllers.remove(categoryName);
+      sapiRecipientCounts.remove(categoryName);
+      kambingRecipientCounts.remove(categoryName);
+      sapiCustomPercentages.remove(categoryName);
+      kambingCustomPercentages.remove(categoryName);
     });
   }
 
+  void _saveSpeciesValues() {
+    for (final entry in sapiCategoryControllers.entries) {
+      sapiRecipientCounts[entry.key] = int.tryParse(entry.value.text) ?? 0;
+    }
+
+    for (final entry in kambingCategoryControllers.entries) {
+      kambingRecipientCounts[entry.key] = int.tryParse(entry.value.text) ?? 0;
+    }
+
+    for (final entry in sapiPercentageControllers.entries) {
+      sapiCustomPercentages[entry.key] = double.tryParse(entry.value.text) ?? 0;
+    }
+
+    for (final entry in kambingPercentageControllers.entries) {
+      kambingCustomPercentages[entry.key] =
+          double.tryParse(entry.value.text) ?? 0;
+    }
+  }
+
+  bool _hasAnyRecipientValue(Map<String, int> counts) {
+    return counts.values.any((count) => count > 0);
+  }
+
   void _proceedToResult() {
-    // Validate inputs
-    bool hasValidRecipients = recipientCounts.values.any((count) => count > 0);
-    if (!hasValidRecipients) {
+    _saveSpeciesValues();
+
+    final sapiWeight = double.tryParse(sapiWeightController.text.trim()) ?? 0;
+    final kambingWeight =
+        double.tryParse(kambingWeightController.text.trim()) ?? 0;
+
+    final hasSapiInput = sapiWeight > 0;
+    final hasKambingInput = kambingWeight > 0;
+
+    if (!hasSapiInput && !hasKambingInput) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Masukkan minimal 1 penerima di setiap kategori'),
+          content: Text('Masukkan minimal bobot daging sapi atau kambing'),
         ),
       );
       return;
     }
 
-    // Calculate result
+    if (hasSapiInput && !_hasAnyRecipientValue(sapiRecipientCounts)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Tab sapi memerlukan minimal 1 penerima manfaat'),
+        ),
+      );
+      return;
+    }
+
+    if (hasKambingInput && !_hasAnyRecipientValue(kambingRecipientCounts)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Tab kambing memerlukan minimal 1 penerima manfaat'),
+        ),
+      );
+      return;
+    }
+
     try {
-      final result = CalculatorService.calculate(
+      final comparisonResult = CalculatorService.calculateComparison(
         templateId: widget.templateId,
-        animals: animals,
-        recipientCounts: recipientCounts,
-        customPercentages: customPercentages,
+        sapiWeight: sapiWeight,
+        kambingWeight: kambingWeight,
+        sapiRecipientCounts: sapiRecipientCounts,
+        kambingRecipientCounts: kambingRecipientCounts,
+        sapiCustomPercentages: sapiCustomPercentages,
+        kambingCustomPercentages: kambingCustomPercentages,
       );
 
-      context.push('/calculator-result', extra: result);
-    } catch (e) {
+      context.push('/calculator-result', extra: comparisonResult);
+    } catch (error) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Error: $e')));
+      ).showSnackBar(SnackBar(content: Text('Error: $error')));
     }
   }
 
@@ -181,7 +266,6 @@ class _CalculatorInputPageState extends State<CalculatorInputPage>
       ),
       body: Column(
         children: [
-          // Tab bar untuk Sapi dan Kambing
           TabBar(
             controller: _tabController,
             labelColor: AppColors.essentialBrightAccent,
@@ -192,22 +276,29 @@ class _CalculatorInputPageState extends State<CalculatorInputPage>
               Tab(text: 'Kambing'),
             ],
           ),
-
-          // Content
           Expanded(
             child: TabBarView(
               controller: _tabController,
               children: [
-                // Tab 1: Input data dan penerima
-                _buildInputTab(),
-
-                // Tab 2: Input data dan penerima untuk kambing
-                _buildInputTab(),
+                _buildSpeciesTab(
+                  speciesLabel: 'Sapi',
+                  weightController: sapiWeightController,
+                  recipientCounts: sapiRecipientCounts,
+                  categoryControllers: sapiCategoryControllers,
+                  customPercentages: sapiCustomPercentages,
+                  percentageControllers: sapiPercentageControllers,
+                ),
+                _buildSpeciesTab(
+                  speciesLabel: 'Kambing',
+                  weightController: kambingWeightController,
+                  recipientCounts: kambingRecipientCounts,
+                  categoryControllers: kambingCategoryControllers,
+                  customPercentages: kambingCustomPercentages,
+                  percentageControllers: kambingPercentageControllers,
+                ),
               ],
             ),
           ),
-
-          // Action button
           Padding(
             padding: const EdgeInsets.all(AppSpacing.lg),
             child: SizedBox(
@@ -216,25 +307,10 @@ class _CalculatorInputPageState extends State<CalculatorInputPage>
                 onPressed: _proceedToResult,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.essentialBrightAccent,
-                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.md),
-                  ),
                 ),
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.done, color: Colors.white),
-                    SizedBox(width: AppSpacing.sm),
-                    Text(
-                      'Hitung',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: AppTypography.bodyMedium,
-                        fontWeight: AppTypography.semiBold,
-                      ),
-                    ),
-                  ],
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16.0),
+                  child: Text('Lihat Hasil', style: TextStyle(fontSize: 16)),
                 ),
               ),
             ),
@@ -244,19 +320,25 @@ class _CalculatorInputPageState extends State<CalculatorInputPage>
     );
   }
 
-  Widget _buildInputTab() {
+  Widget _buildSpeciesTab({
+    required String speciesLabel,
+    required TextEditingController weightController,
+    required Map<String, int> recipientCounts,
+    required Map<String, TextEditingController> categoryControllers,
+    required Map<String, double> customPercentages,
+    required Map<String, TextEditingController> percentageControllers,
+  }) {
+    final hasCustomCategories = widget.templateId == 'template_c';
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Progress
           _buildProgressIndicator(),
           const SizedBox(height: AppSpacing.xl),
-
-          // Title
           Text(
-            'Input Alokasi Daging',
+            'Input Bobot $speciesLabel',
             style: TextStyle(
               fontSize: AppTypography.headingLarge,
               fontWeight: AppTypography.bold,
@@ -264,26 +346,51 @@ class _CalculatorInputPageState extends State<CalculatorInputPage>
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
-
           Text(
-            'Masukkan estimasi jumlah penerima manfaat untuk kalkulasi porsi distribusi yang presisi.',
+            'Tab ini khusus untuk qurban $speciesLabel. Bobot kosong diperbolehkan.',
             style: TextStyle(
               fontSize: AppTypography.bodyMedium,
               color: AppColors.textSubdued,
             ),
           ),
           const SizedBox(height: AppSpacing.xl),
-
-          // Recipient inputs
+          _buildWeightCard(
+            title: speciesLabel,
+            helperText:
+                'Masukkan total bobot daging $speciesLabel dalam kilogram',
+            controller: weightController,
+          ),
+          const SizedBox(height: AppSpacing.xl),
+          Text(
+            'Input Penerima $speciesLabel',
+            style: TextStyle(
+              fontSize: AppTypography.headingMedium,
+              fontWeight: AppTypography.semiBold,
+              color: AppColors.textBase,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            'Masukkan jumlah penerima yang khusus berlaku untuk qurban $speciesLabel.',
+            style: TextStyle(
+              fontSize: AppTypography.bodyMedium,
+              color: AppColors.textSubdued,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xl),
           ...categories.map((category) {
             return Padding(
               padding: const EdgeInsets.only(bottom: AppSpacing.lg),
-              child: _buildRecipientInput(category),
+              child: _buildRecipientInput(
+                category: category,
+                recipientCounts: recipientCounts,
+                categoryControllers: categoryControllers,
+                customPercentages: customPercentages,
+                percentageControllers: percentageControllers,
+              ),
             );
           }),
-
-          // For template C: Add category button
-          if (widget.templateId == 'template_c') ...[
+          if (hasCustomCategories) ...[
             GestureDetector(
               onTap: _addCategoryForTemplateC,
               child: Container(
@@ -320,78 +427,24 @@ class _CalculatorInputPageState extends State<CalculatorInputPage>
                 ),
               ),
             ),
+            const SizedBox(height: AppSpacing.xl),
           ],
-
-          // Info note
-          if (widget.templateId == 'template_a')
-            Padding(
-              padding: const EdgeInsets.only(top: AppSpacing.lg),
-              child: Container(
-                padding: const EdgeInsets.all(AppSpacing.md),
-                decoration: BoxDecoration(
-                  color: AppColors.essentialBrightAccent.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Icon(
-                      Icons.info,
-                      color: AppColors.essentialBrightAccent,
-                    ),
-                    const SizedBox(width: AppSpacing.md),
-                    Expanded(
-                      child: Text(
-                        'Template A menggunakan rasio 1/3 : 1/3 : 1/3 secara default untuk alokasi Shohibul, Mustahik, dan Hadiah.',
-                        style: TextStyle(
-                          fontSize: AppTypography.bodySmall,
-                          color: AppColors.textBase,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-          if (widget.templateId == 'template_b')
-            Padding(
-              padding: const EdgeInsets.only(top: AppSpacing.lg),
-              child: Container(
-                padding: const EdgeInsets.all(AppSpacing.md),
-                decoration: BoxDecoration(
-                  color: AppColors.essentialBrightAccent.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Icon(
-                      Icons.info,
-                      color: AppColors.essentialBrightAccent,
-                    ),
-                    const SizedBox(width: AppSpacing.md),
-                    Expanded(
-                      child: Text(
-                        'Template B menggunakan rasio Shohibul dan Masyarakat untuk pembagian daging yang lebih proporsional.',
-                        style: TextStyle(
-                          fontSize: AppTypography.bodySmall,
-                          color: AppColors.textBase,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
+          _buildInfoNote(
+            message: speciesLabel == 'Sapi'
+                ? 'Tab sapi menghitung hasil berdasarkan bobot dan penerima yang diinput khusus untuk sapi.'
+                : 'Tab kambing menghitung hasil berdasarkan bobot dan penerima yang diinput khusus untuk kambing.',
+          ),
           const SizedBox(height: AppSpacing.xl),
         ],
       ),
     );
   }
 
-  Widget _buildRecipientInput(RecipientCategory category) {
+  Widget _buildWeightCard({
+    required String title,
+    required String helperText,
+    required TextEditingController controller,
+  }) {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
@@ -402,7 +455,71 @@ class _CalculatorInputPageState extends State<CalculatorInputPage>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Category header
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: AppTypography.bodyLarge,
+              fontWeight: AppTypography.semiBold,
+              color: AppColors.textBase,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            helperText,
+            style: TextStyle(
+              fontSize: AppTypography.bodySmall,
+              color: AppColors.textSubdued,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          TextField(
+            controller: controller,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: InputDecoration(
+              hintText: 'Kosongkan jika tidak ada',
+              suffixText: 'kg',
+              filled: true,
+              fillColor: Colors.white,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md,
+                vertical: AppSpacing.md,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                borderSide: const BorderSide(
+                  color: AppColors.decorativeSubdued,
+                ),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                borderSide: const BorderSide(
+                  color: AppColors.decorativeSubdued,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRecipientInput({
+    required RecipientCategory category,
+    required Map<String, int> recipientCounts,
+    required Map<String, TextEditingController> categoryControllers,
+    required Map<String, double> customPercentages,
+    required Map<String, TextEditingController> percentageControllers,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.backgroundElevatedBase,
+        border: Border.all(color: AppColors.decorativeSubdued),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
           Row(
             children: [
               Container(
@@ -451,12 +568,8 @@ class _CalculatorInputPageState extends State<CalculatorInputPage>
                 ),
             ],
           ),
-
           const SizedBox(height: AppSpacing.md),
-
-          // Input fields
           if (widget.templateId == 'template_c') ...[
-            // Percentage input for template C
             Padding(
               padding: const EdgeInsets.only(bottom: AppSpacing.md),
               child: Column(
@@ -473,7 +586,9 @@ class _CalculatorInputPageState extends State<CalculatorInputPage>
                   const SizedBox(height: AppSpacing.sm),
                   TextField(
                     controller: percentageControllers[category.name],
-                    keyboardType: TextInputType.number,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     onChanged: (value) {
                       setState(() {
                         customPercentages[category.name] =
@@ -506,8 +621,6 @@ class _CalculatorInputPageState extends State<CalculatorInputPage>
               ),
             ),
           ],
-
-          // Recipient count input
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -530,7 +643,7 @@ class _CalculatorInputPageState extends State<CalculatorInputPage>
                 },
                 decoration: InputDecoration(
                   hintText: 'Masukkan jumlah orang',
-                  suffixText: 'PERSONS',
+                  suffixText: 'KK',
                   filled: true,
                   fillColor: Colors.white,
                   contentPadding: const EdgeInsets.symmetric(
@@ -558,12 +671,35 @@ class _CalculatorInputPageState extends State<CalculatorInputPage>
     );
   }
 
+  Widget _buildInfoNote({required String message}) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.essentialBrightAccent.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.info, color: AppColors.essentialBrightAccent),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Text(
+              message,
+              style: TextStyle(
+                fontSize: AppTypography.bodySmall,
+                color: AppColors.textBase,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildProgressIndicator() {
-    int currentProgress = 2; // Step 2
-    if (widget.templateId == 'template_c') {
-      currentProgress = 3; // Step 3 for template C
-    }
-    double progressValue = currentProgress / 4;
+    final currentProgress = widget.templateId == 'template_c' ? 3 : 2;
+    final progressValue = currentProgress / 4;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

@@ -133,14 +133,29 @@ class AppRouter {
       GoRoute(
         path: '/calculator-result',
         builder: (context, state) {
-          final result = state.extra as CalculatorResult?;
-          if (result == null) {
+          final extra = state.extra;
+          if (extra == null) {
             return const Scaffold(
               body: Center(child: Text('Hasil tidak ditemukan')),
             );
           }
 
-          return CalculatorResultPage(result: result);
+          if (extra is CalculatorComparisonResult) {
+            return CalculatorResultPage(comparisonResult: extra);
+          }
+
+          if (extra is CalculatorResult) {
+            return CalculatorResultPage(
+              comparisonResult: CalculatorComparisonResult(
+                sapiResult: extra,
+                kambingResult: null,
+              ),
+            );
+          }
+
+          return const Scaffold(
+            body: Center(child: Text('Format hasil tidak valid')),
+          );
         },
       ),
       GoRoute(

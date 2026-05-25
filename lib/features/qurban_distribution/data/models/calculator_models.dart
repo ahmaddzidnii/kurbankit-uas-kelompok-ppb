@@ -72,6 +72,16 @@ class CalculatorResult {
   });
 }
 
+class CalculatorComparisonResult {
+  final CalculatorResult? sapiResult;
+  final CalculatorResult? kambingResult;
+
+  CalculatorComparisonResult({
+    required this.sapiResult,
+    required this.kambingResult,
+  });
+}
+
 class CalculatorHistory {
   final String id;
   final String templateId;

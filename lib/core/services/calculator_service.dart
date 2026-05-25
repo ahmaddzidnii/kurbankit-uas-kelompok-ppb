@@ -8,21 +8,22 @@ class CalculatorService {
     CalculatorTemplate(
       id: 'template_a',
       name: 'Template A: Standar',
-      description: 'Standar (Shohibul, Fakir Miskin, Warga Umum)',
+      description: 'Standar (1/3 Shohibul, 1/3 Fakir Miskin, 1/3 Warga Umum)',
       icon: '🏛️',
       categories: ['Shohibul', 'Fakir Miskin', 'Warga Umum'],
     ),
     CalculatorTemplate(
       id: 'template_b',
       name: 'Template B: Sederhana',
-      description: 'Sederhana (Shohibul, Masyarakat)',
+      description: 'Sederhana (1/3 Shohibul, 2/3 Masyarakat)',
       icon: '👥',
       categories: ['Shohibul', 'Masyarakat'],
     ),
     CalculatorTemplate(
       id: 'template_c',
       name: 'Template C: Kustom',
-      description: 'Kustom (Atur Persentase & Kategori Sendiri)',
+      description:
+          'Kustom sesuai musyawarah, total 100%, tanpa melebihi total qurban',
       icon: '⚙️',
       categories: [],
     ),
@@ -44,7 +45,7 @@ class CalculatorService {
         return [
           RecipientCategory(
             name: 'Shohibul',
-            icon: '🙏',
+            icon: '🙎',
             description: 'Pekurban yang berhak menerima 1/3 bagian',
             count: 0,
           ),
@@ -65,7 +66,7 @@ class CalculatorService {
         return [
           RecipientCategory(
             name: 'Shohibul',
-            icon: '🙏',
+            icon: '🙎',
             description: 'Penerima dari pihak berkurban',
             count: 0,
           ),
@@ -95,10 +96,14 @@ class CalculatorService {
       throw Exception('Template tidak ditemukan');
     }
 
-    double totalWeight = animals.fold(
+    final totalWeight = animals.fold<double>(
       0,
       (sum, animal) => sum + (animal.weight * animal.count),
     );
+
+    if (totalWeight <= 0) {
+      throw Exception('Total berat qurban harus lebih dari 0');
+    }
 
     Map<String, double> allocations = {};
     Map<String, double> perBagWeight = {};
@@ -129,9 +134,9 @@ class CalculatorService {
         break;
 
       case 'template_b':
-        // Alokasi: 50% Shohibul, 50% Masyarakat
-        allocations['Shohibul'] = totalWeight / 2;
-        allocations['Masyarakat'] = totalWeight / 2;
+        // Alokasi: 1/3 Shohibul, 2/3 Masyarakat
+        allocations['Shohibul'] = totalWeight / 3;
+        allocations['Masyarakat'] = (totalWeight * 2) / 3;
 
         perBagWeight['Shohibul'] =
             recipientCounts['Shohibul'] != null &&
@@ -146,8 +151,24 @@ class CalculatorService {
         break;
 
       case 'template_c':
-        // Alokasi berdasarkan custom percentages
+        if (customPercentages.isEmpty) {
+          throw Exception('Template kustom membutuhkan minimal 1 kategori');
+        }
+
+        final totalPercentage = customPercentages.values.fold<double>(
+          0,
+          (sum, percentage) => sum + percentage,
+        );
+        if ((totalPercentage - 100).abs() > 0.01) {
+          throw Exception('Total persentase template kustom harus 100%');
+        }
+
+        // Alokasi berdasarkan persentase yang disepakati musyawarah,
+        // dengan total tetap 100% agar sesuai kaidah pembagian.
         customPercentages.forEach((category, percentage) {
+          if (percentage < 0) {
+            throw Exception('Persentase tidak boleh negatif');
+          }
           allocations[category] = (totalWeight * percentage) / 100;
           perBagWeight[category] =
               recipientCounts[category] != null &&
@@ -169,6 +190,56 @@ class CalculatorService {
       totalBags: totalBags,
       totalWeight: totalWeight,
       perBagWeight: perBagWeight,
+    );
+  }
+
+  static CalculatorResult calculateForSingleAnimal({
+    required String templateId,
+    required String animalType,
+    required double animalWeight,
+    required Map<String, int> recipientCounts,
+    required Map<String, double> customPercentages,
+  }) {
+    return calculate(
+      templateId: templateId,
+      animals: [AnimalData(type: animalType, weight: animalWeight, count: 1)],
+      recipientCounts: recipientCounts,
+      customPercentages: customPercentages,
+    );
+  }
+
+  static CalculatorComparisonResult calculateComparison({
+    required String templateId,
+    required double sapiWeight,
+    required double kambingWeight,
+    required Map<String, int> sapiRecipientCounts,
+    required Map<String, int> kambingRecipientCounts,
+    required Map<String, double> sapiCustomPercentages,
+    required Map<String, double> kambingCustomPercentages,
+  }) {
+    final sapiResult = sapiWeight > 0
+        ? calculateForSingleAnimal(
+            templateId: templateId,
+            animalType: 'Sapi',
+            animalWeight: sapiWeight,
+            recipientCounts: sapiRecipientCounts,
+            customPercentages: sapiCustomPercentages,
+          )
+        : null;
+
+    final kambingResult = kambingWeight > 0
+        ? calculateForSingleAnimal(
+            templateId: templateId,
+            animalType: 'Kambing',
+            animalWeight: kambingWeight,
+            recipientCounts: kambingRecipientCounts,
+            customPercentages: kambingCustomPercentages,
+          )
+        : null;
+
+    return CalculatorComparisonResult(
+      sapiResult: sapiResult,
+      kambingResult: kambingResult,
     );
   }
 

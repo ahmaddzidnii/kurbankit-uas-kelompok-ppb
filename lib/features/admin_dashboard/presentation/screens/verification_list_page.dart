@@ -73,6 +73,13 @@ class _VerificationListPageState extends State<VerificationListPage> {
         foregroundColor: Colors.white,
         title: Text(_titles[_selectedIndex]),
         elevation: 0,
+        actions: [
+          IconButton(
+            tooltip: 'Kalkulator Qurban',
+            onPressed: () => context.push('/calculator-template-selection'),
+            icon: const Icon(Icons.calculate_rounded),
+          ),
+        ],
       ),
       body: IndexedStack(index: _selectedIndex, children: pages),
       bottomNavigationBar: Container(
