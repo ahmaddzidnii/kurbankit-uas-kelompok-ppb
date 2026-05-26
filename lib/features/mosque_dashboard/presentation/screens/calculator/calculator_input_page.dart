@@ -19,6 +19,7 @@ class _CalculatorInputPageState extends State<CalculatorInputPage>
 
   final sapiWeightController = TextEditingController();
   final kambingWeightController = TextEditingController();
+  final kelompokNameController = TextEditingController();
 
   late List<RecipientCategory> categories;
 
@@ -67,6 +68,7 @@ class _CalculatorInputPageState extends State<CalculatorInputPage>
     _tabController.dispose();
     sapiWeightController.dispose();
     kambingWeightController.dispose();
+    kelompokNameController.dispose();
     for (final controller in sapiCategoryControllers.values) {
       controller.dispose();
     }
@@ -165,20 +167,29 @@ class _CalculatorInputPageState extends State<CalculatorInputPage>
 
   void _saveSpeciesValues() {
     for (final entry in sapiCategoryControllers.entries) {
-      sapiRecipientCounts[entry.key] = int.tryParse(entry.value.text) ?? 0;
+      if (entry.value != null) {
+        sapiRecipientCounts[entry.key] = int.tryParse(entry.value.text) ?? 0;
+      }
     }
 
     for (final entry in kambingCategoryControllers.entries) {
-      kambingRecipientCounts[entry.key] = int.tryParse(entry.value.text) ?? 0;
+      if (entry.value != null) {
+        kambingRecipientCounts[entry.key] = int.tryParse(entry.value.text) ?? 0;
+      }
     }
 
     for (final entry in sapiPercentageControllers.entries) {
-      sapiCustomPercentages[entry.key] = double.tryParse(entry.value.text) ?? 0;
+      if (entry.value != null) {
+        sapiCustomPercentages[entry.key] =
+            double.tryParse(entry.value.text) ?? 0;
+      }
     }
 
     for (final entry in kambingPercentageControllers.entries) {
-      kambingCustomPercentages[entry.key] =
-          double.tryParse(entry.value.text) ?? 0;
+      if (entry.value != null) {
+        kambingCustomPercentages[entry.key] =
+            double.tryParse(entry.value.text) ?? 0;
+      }
     }
   }
 
@@ -233,6 +244,14 @@ class _CalculatorInputPageState extends State<CalculatorInputPage>
         sapiCustomPercentages: sapiCustomPercentages,
         kambingCustomPercentages: kambingCustomPercentages,
       );
+
+      // Add group name to the comparison result
+      try {
+        comparisonResult.kelompokName = kelompokNameController.text.trim();
+      } catch (e) {
+        // If controller is not available, leave kelompokName as null
+        comparisonResult.kelompokName = null;
+      }
 
       context.push('/calculator-result', extra: comparisonResult);
     } catch (error) {
@@ -354,6 +373,64 @@ class _CalculatorInputPageState extends State<CalculatorInputPage>
             ),
           ),
           const SizedBox(height: AppSpacing.xl),
+          if (speciesLabel == 'Sapi')
+            Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.xl),
+              child: Container(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                decoration: BoxDecoration(
+                  color: AppColors.backgroundElevatedBase,
+                  border: Border.all(color: AppColors.decorativeSubdued),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Nama Kelompok',
+                      style: TextStyle(
+                        fontSize: AppTypography.bodyLarge,
+                        fontWeight: AppTypography.semiBold,
+                        color: AppColors.textBase,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    Text(
+                      'Masukkan nama kelompok atau organisasi yang berkurban',
+                      style: TextStyle(
+                        fontSize: AppTypography.bodySmall,
+                        color: AppColors.textSubdued,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    TextField(
+                      controller: kelompokNameController,
+                      decoration: InputDecoration(
+                        hintText: 'Cth: Kelompok 1',
+                        filled: true,
+                        fillColor: Colors.white,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.md,
+                          vertical: AppSpacing.md,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                          borderSide: const BorderSide(
+                            color: AppColors.decorativeSubdued,
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                          borderSide: const BorderSide(
+                            color: AppColors.decorativeSubdued,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           _buildWeightCard(
             title: speciesLabel,
             helperText:
@@ -585,7 +662,9 @@ class _CalculatorInputPageState extends State<CalculatorInputPage>
                   ),
                   const SizedBox(height: AppSpacing.sm),
                   TextField(
-                    controller: percentageControllers[category.name],
+                    controller:
+                        percentageControllers[category.name] ??
+                        TextEditingController(),
                     keyboardType: const TextInputType.numberWithOptions(
                       decimal: true,
                     ),
@@ -634,7 +713,9 @@ class _CalculatorInputPageState extends State<CalculatorInputPage>
               ),
               const SizedBox(height: AppSpacing.sm),
               TextField(
-                controller: categoryControllers[category.name],
+                controller:
+                    categoryControllers[category.name] ??
+                    TextEditingController(),
                 keyboardType: TextInputType.number,
                 onChanged: (value) {
                   setState(() {
@@ -642,8 +723,10 @@ class _CalculatorInputPageState extends State<CalculatorInputPage>
                   });
                 },
                 decoration: InputDecoration(
-                  hintText: 'Masukkan jumlah orang',
-                  suffixText: 'KK',
+                  hintText: category.name == 'Shohibul'
+                      ? 'Masukkan jumlah Shohibul'
+                      : 'Masukkan jumlah KK',
+                  suffixText: category.name == 'Shohibul' ? 'orang' : 'KK',
                   filled: true,
                   fillColor: Colors.white,
                   contentPadding: const EdgeInsets.symmetric(

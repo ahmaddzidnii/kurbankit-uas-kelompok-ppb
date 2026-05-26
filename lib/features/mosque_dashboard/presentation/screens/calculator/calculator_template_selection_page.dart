@@ -70,98 +70,88 @@ class _CalculatorTemplateSelectionPageState
                     template.id == CalculatorService.templates.first.id;
                 return Column(
                   children: [
-                    GestureDetector(
-                      onTap: () {
-                        context.push('/calculator-input/${template.id}');
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.all(AppSpacing.lg),
-                        decoration: BoxDecoration(
-                          color: AppColors.backgroundElevatedBase,
-                          border: Border.all(
-                            color: isFirst
-                                ? AppColors.essentialBrightAccent
-                                : AppColors.decorativeSubdued,
-                            width: isFirst ? 2 : 1,
+                    SizedBox(
+                      width: double.infinity,
+                      height: 200,
+                      child: GestureDetector(
+                        onTap: () {
+                          context.push('/calculator-input/${template.id}');
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(AppSpacing.lg),
+                          decoration: BoxDecoration(
+                            color: AppColors.backgroundElevatedBase,
+                            border: Border.all(
+                              color: isFirst
+                                  ? AppColors.essentialBrightAccent
+                                  : AppColors.decorativeSubdued,
+                              width: isFirst ? 2 : 1,
+                            ),
+                            borderRadius: BorderRadius.circular(AppRadius.md),
                           ),
-                          borderRadius: BorderRadius.circular(AppRadius.md),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Icon
-                            Container(
-                              width: 48,
-                              height: 48,
-                              decoration: BoxDecoration(
-                                color: AppColors.essentialBrightAccent
-                                    .withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.sm,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Title
+                              Text(
+                                template.name,
+                                style: TextStyle(
+                                  fontSize: AppTypography.headingMedium,
+                                  fontWeight: AppTypography.bold,
+                                  color: AppColors.textBase,
                                 ),
                               ),
-                              child: Center(
+                              const SizedBox(height: AppSpacing.sm),
+
+                              // Description
+                              Expanded(
                                 child: Text(
-                                  template.icon,
-                                  style: const TextStyle(fontSize: 24),
+                                  template.description,
+                                  style: TextStyle(
+                                    fontSize: AppTypography.bodySmall,
+                                    color: AppColors.textSubdued,
+                                  ),
+                                  maxLines: 3,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
-                            ),
-                            const SizedBox(height: AppSpacing.md),
+                              const SizedBox(height: AppSpacing.md),
 
-                            // Title
-                            Text(
-                              template.name,
-                              style: TextStyle(
-                                fontSize: AppTypography.headingMedium,
-                                fontWeight: AppTypography.bold,
-                                color: AppColors.textBase,
-                              ),
-                            ),
-                            const SizedBox(height: AppSpacing.sm),
-
-                            // Description
-                            Text(
-                              template.description,
-                              style: TextStyle(
-                                fontSize: AppTypography.bodySmall,
-                                color: AppColors.textSubdued,
-                              ),
-                            ),
-                            const SizedBox(height: AppSpacing.md),
-
-                            // Categories tag
-                            if (template.categories.isNotEmpty)
-                              Wrap(
-                                spacing: AppSpacing.sm,
-                                children: template.categories
-                                    .map(
-                                      (category) => Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: AppSpacing.sm,
-                                          vertical: AppSpacing.xs,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: AppColors.essentialBrightAccent
-                                              .withValues(alpha: 0.15),
-                                          borderRadius: BorderRadius.circular(
-                                            AppRadius.xs,
+                              // Categories tag
+                              if (template.categories.isNotEmpty)
+                                Wrap(
+                                  spacing: AppSpacing.sm,
+                                  children: template.categories
+                                      .map(
+                                        (category) => Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: AppSpacing.sm,
+                                            vertical: AppSpacing.xs,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: AppColors
+                                                .essentialBrightAccent
+                                                .withValues(alpha: 0.15),
+                                            borderRadius: BorderRadius.circular(
+                                              AppRadius.xs,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            category,
+                                            style: const TextStyle(
+                                              fontSize:
+                                                  AppTypography.labelSmall,
+                                              fontWeight: AppTypography.medium,
+                                              color: AppColors
+                                                  .essentialBrightAccent,
+                                            ),
                                           ),
                                         ),
-                                        child: Text(
-                                          category,
-                                          style: const TextStyle(
-                                            fontSize: AppTypography.labelSmall,
-                                            fontWeight: AppTypography.medium,
-                                            color:
-                                                AppColors.essentialBrightAccent,
-                                          ),
-                                        ),
-                                      ),
-                                    )
-                                    .toList(),
-                              ),
-                          ],
+                                      )
+                                      .toList(),
+                                ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
