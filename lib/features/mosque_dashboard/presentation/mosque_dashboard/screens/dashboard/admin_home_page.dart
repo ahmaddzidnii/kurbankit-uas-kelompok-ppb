@@ -177,7 +177,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
     return _buildCompactStatisticCard(
       icon: Icons.people_rounded,
       title: 'Total Mustahiq',
-      value: '1,248',
+      value: '0',
       subtitle: 'Seluruh mustahiq terdaftar',
       backgroundColor: AppColors.essentialBrightAccent.withOpacity(0.1),
       iconColor: AppColors.essentialBrightAccent,

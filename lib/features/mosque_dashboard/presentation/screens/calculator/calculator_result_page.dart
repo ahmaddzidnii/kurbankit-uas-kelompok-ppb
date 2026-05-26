@@ -40,9 +40,12 @@ class _CalculatorResultPageState extends State<CalculatorResultPage>
           icon: const Icon(Icons.arrow_back, color: AppColors.textBase),
           onPressed: () => context.pop(),
         ),
-        title: const Text(
-          'Hasil Perhitungan',
-          style: TextStyle(
+        title: Text(
+          widget.comparisonResult.kelompokName != null &&
+                  widget.comparisonResult.kelompokName!.isNotEmpty
+              ? 'Hasil Perhitungan - ${widget.comparisonResult.kelompokName}'
+              : 'Hasil Perhitungan',
+          style: const TextStyle(
             color: AppColors.textBase,
             fontSize: AppTypography.headingMedium,
             fontWeight: AppTypography.semiBold,
@@ -355,6 +358,20 @@ class _CalculatorResultPageState extends State<CalculatorResultPage>
     );
   }
 
+  Color _getCategoryColor(int index) {
+    const colors = [
+      Color(0xFF00A896), // Teal
+      Color(0xFF005E53), // Dark Teal
+      Color(0xFFD4A574), // Tan
+      Color(0xFFA8DADC), // Light Blue
+      Color(0xFFF1FAEE), // Very Light
+      Color(0xFFE63946), // Red
+      Color(0xFFFF9F1C), // Orange
+      Color(0xFF7209B7), // Purple
+    ];
+    return colors[index % colors.length];
+  }
+
   Widget _buildAllocationProgress(CalculatorResult result) {
     final allocationEntries = result.allocations.entries.toList();
     final totalAllocated = result.allocations.values.fold<double>(
@@ -398,23 +415,20 @@ class _CalculatorResultPageState extends State<CalculatorResultPage>
           const SizedBox(height: AppSpacing.md),
           ClipRRect(
             borderRadius: BorderRadius.circular(AppRadius.xs),
-            child: LinearProgressIndicator(
-              value: ratio.clamp(0.0, 1.0).toDouble(),
-              minHeight: 8,
-              backgroundColor: AppColors.decorativeSubdued,
-              valueColor: const AlwaysStoppedAnimation<Color>(
-                AppColors.essentialBrightAccent,
-              ),
-            ),
+            child: _buildMultiColorProgressBar(allocationEntries, result),
           ),
           const SizedBox(height: AppSpacing.md),
           Wrap(
             spacing: AppSpacing.md,
             runSpacing: AppSpacing.sm,
-            children: allocationEntries.map((entry) {
+            children: allocationEntries.asMap().entries.map((entry) {
+              final index = entry.key;
+              final categoryEntry = entry.value;
               final percentage = result.totalWeight <= 0
                   ? 0
-                  : (entry.value / result.totalWeight * 100).toStringAsFixed(0);
+                  : (categoryEntry.value / result.totalWeight * 100)
+                        .toStringAsFixed(0);
+              final color = _getCategoryColor(index);
               return Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -422,13 +436,13 @@ class _CalculatorResultPageState extends State<CalculatorResultPage>
                     width: 12,
                     height: 12,
                     decoration: BoxDecoration(
-                      color: AppColors.essentialBrightAccent,
+                      color: color,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
                   const SizedBox(width: AppSpacing.xs),
                   Text(
-                    '${entry.key} $percentage%',
+                    '${categoryEntry.key} $percentage%',
                     style: TextStyle(
                       fontSize: AppTypography.labelSmall,
                       color: AppColors.textSubdued,
@@ -439,6 +453,35 @@ class _CalculatorResultPageState extends State<CalculatorResultPage>
             }).toList(),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildMultiColorProgressBar(
+    List<MapEntry<String, double>> allocationEntries,
+    CalculatorResult result,
+  ) {
+    final totalAllocated = result.allocations.values.fold<double>(
+      0,
+      (sum, value) => sum + value,
+    );
+
+    return SizedBox(
+      height: 8,
+      child: Row(
+        children: allocationEntries.asMap().entries.map((entry) {
+          final index = entry.key;
+          final categoryEntry = entry.value;
+          final percentage = result.totalWeight <= 0
+              ? 0.0
+              : categoryEntry.value / result.totalWeight;
+          final color = _getCategoryColor(index);
+
+          return Expanded(
+            flex: (percentage * 100).toInt().clamp(0, 100),
+            child: Container(color: color),
+          );
+        }).toList(),
       ),
     );
   }

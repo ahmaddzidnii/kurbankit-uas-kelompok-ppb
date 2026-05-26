@@ -75,10 +75,12 @@ class CalculatorResult {
 class CalculatorComparisonResult {
   final CalculatorResult? sapiResult;
   final CalculatorResult? kambingResult;
+  String? kelompokName;
 
   CalculatorComparisonResult({
     required this.sapiResult,
     required this.kambingResult,
+    this.kelompokName,
   });
 }
 
