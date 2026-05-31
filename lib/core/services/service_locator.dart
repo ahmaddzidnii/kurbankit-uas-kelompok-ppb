@@ -2,6 +2,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get_it/get_it.dart';
 import 'package:qurban_kit/core/services/api_client.dart';
 import 'package:qurban_kit/features/auth/data/services/auth_repository.dart';
+import 'package:qurban_kit/features/mosque_dashboard/data/services/period_data_source.dart';
 import 'package:qurban_kit/features/mosque_registration/data/services/mosque_repository.dart';
 import 'package:qurban_kit/features/admin_dashboard/data/services/admin_mosque_data_source.dart';
 import 'package:qurban_kit/features/auth/data/services/auth_data_source.dart';
@@ -32,6 +33,10 @@ void setupServiceLocator() {
     AdminMosqueDataSourceImpl(getIt<ApiClient>()),
   );
 
+  getIt.registerSingleton<PeriodDataSource>(
+    PeriodDataSourceImpl(getIt<ApiClient>()),
+  );
+
   // Repositories
   getIt.registerSingleton<AuthRepository>(
     AuthRepositoryImpl(
@@ -52,3 +57,4 @@ MosqueRepository get mosqueRepository => getIt<MosqueRepository>();
 ApiClient get apiClient => getIt<ApiClient>();
 AdminMosqueDataSource get adminMosqueDataSource =>
     getIt<AdminMosqueDataSource>();
+PeriodDataSource get periodDataSource => getIt<PeriodDataSource>();
