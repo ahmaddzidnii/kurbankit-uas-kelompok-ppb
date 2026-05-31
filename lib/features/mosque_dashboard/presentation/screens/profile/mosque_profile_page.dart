@@ -40,8 +40,9 @@ class MosqueProfilePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final displayName = user?.name ?? 'Ahmad Suherman';
-    final displayEmail = user?.email ?? 'ahmad.suherman@masjidalihsan.org';
+    final displayName = user?.name ?? 'Nama belum tersedia';
+    final displayEmail = user?.email ?? 'Email belum tersedia';
+    final mosqueName = user?.masjid?.nama ?? 'Data masjid belum tersedia';
     final role = user?.role == 'ADMIN_MASJID' ? 'Mosque Admin' : 'User';
 
     return Scaffold(
@@ -146,11 +147,7 @@ class MosqueProfilePage extends StatelessWidget {
               _buildInfoCard(
                 icon: Icons.mosque_rounded,
                 title: 'Informasi Masjid',
-                children: [
-                  _buildInfoRow('Nama', 'Masjid Al-Ihsan'),
-                  const SizedBox(height: AppSpacing.md),
-                  _buildInfoRow('Alamat', 'Jl. Merdeka No.123, Jakarta'),
-                ],
+                children: [_buildInfoRow('Nama', mosqueName)],
               ),
 
               const SizedBox(height: AppSpacing.lg),

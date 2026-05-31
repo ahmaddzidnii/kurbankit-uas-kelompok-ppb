@@ -52,32 +52,27 @@ class _PeriodsPageState extends State<PeriodsPage> {
   }
 
   Future<void> _openDetailSheet(String periodId) async {
-    final period = await _safeGetPeriod(periodId);
-    if (!mounted || period == null) {
-      return;
-    }
-
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (sheetContext) => _PeriodDetailSheet(
-        period: period,
-        onEdit: () async {
+      builder: (sheetContext) => _PeriodDetailLoader(
+        periodId: periodId,
+        onEdit: (period) async {
           Navigator.of(sheetContext).pop();
           final saved = await _showPeriodForm(period: period);
           if (saved && mounted) {
             await _refreshPeriods();
           }
         },
-        onDelete: () async {
+        onDelete: (period) async {
           final deleted = await _confirmDelete(period);
           if (deleted && mounted) {
             Navigator.of(sheetContext).pop();
             await _refreshPeriods();
           }
         },
-        onToggleActive: (value) async {
+        onToggleActive: (period, value) async {
           await _toggleActive(period, value);
           if (mounted) {
             await _refreshPeriods();
@@ -85,25 +80,6 @@ class _PeriodsPageState extends State<PeriodsPage> {
         },
       ),
     );
-  }
-
-  Future<PeriodModel?> _safeGetPeriod(String periodId) async {
-    try {
-      return await periodDataSource.getPeriodById(periodId);
-    } catch (e) {
-      if (!mounted) {
-        return null;
-      }
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            _resolveErrorMessage(e, 'Gagal mengambil detail periode'),
-          ),
-        ),
-      );
-      return null;
-    }
   }
 
   Future<void> _toggleActive(PeriodModel period, bool value) async {
@@ -407,7 +383,16 @@ class _PeriodsPageState extends State<PeriodsPage> {
             future: _periodsFuture,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
+                return ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.all(AppSpacing.lg),
+                  children: [
+                    SizedBox(
+                      height: 160,
+                      child: const Center(child: CircularProgressIndicator()),
+                    ),
+                  ],
+                );
               }
 
               if (snapshot.hasError) {
@@ -484,10 +469,13 @@ class _PeriodsPageState extends State<PeriodsPage> {
           const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
                   'Ringkasan Periode',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: AppTypography.bodyMedium,
@@ -497,6 +485,8 @@ class _PeriodsPageState extends State<PeriodsPage> {
                 const SizedBox(height: AppSpacing.xs),
                 Text(
                   '${periods.length} periode terdaftar • $activeCount aktif',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: AppTypography.bodySmall,
@@ -548,8 +538,10 @@ class _PeriodsPageState extends State<PeriodsPage> {
               ),
             ),
             const SizedBox(width: AppSpacing.md),
-            Expanded(
+            Flexible(
+              fit: FlexFit.loose,
               child: Column(
+                mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
@@ -557,6 +549,8 @@ class _PeriodsPageState extends State<PeriodsPage> {
                       Expanded(
                         child: Text(
                           period.displayTitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                             fontSize: AppTypography.headingSmall,
                             fontWeight: AppTypography.bold,
@@ -571,6 +565,8 @@ class _PeriodsPageState extends State<PeriodsPage> {
                   const SizedBox(height: AppSpacing.xs),
                   Text(
                     period.displaySubtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: AppTypography.bodySmall,
                       color: AppColors.textSubdued,
@@ -579,6 +575,8 @@ class _PeriodsPageState extends State<PeriodsPage> {
                   const SizedBox(height: AppSpacing.sm),
                   Text(
                     'Ketuk untuk detail, edit, hapus, atau aktifkan.',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: AppTypography.labelSmall,
                       color: AppColors.textSubdued,
@@ -701,6 +699,131 @@ class _PeriodsPageState extends State<PeriodsPage> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _PeriodDetailLoader extends StatefulWidget {
+  final String periodId;
+  final Future<void> Function(PeriodModel) onEdit;
+  final Future<void> Function(PeriodModel) onDelete;
+  final Future<void> Function(PeriodModel, bool) onToggleActive;
+
+  const _PeriodDetailLoader({
+    required this.periodId,
+    required this.onEdit,
+    required this.onDelete,
+    required this.onToggleActive,
+  });
+
+  @override
+  State<_PeriodDetailLoader> createState() => _PeriodDetailLoaderState();
+}
+
+class _PeriodDetailLoaderState extends State<_PeriodDetailLoader> {
+  PeriodModel? _period;
+  Object? _error;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetch();
+  }
+
+  Future<void> _fetch() async {
+    try {
+      final p = await periodDataSource.getPeriodById(widget.periodId);
+      if (!mounted) return;
+      setState(() {
+        _period = p;
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e;
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Container(
+        decoration: BoxDecoration(
+          color: AppColors.backgroundElevatedBase,
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(AppRadius.lg),
+            topRight: Radius.circular(AppRadius.lg),
+          ),
+        ),
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: EdgeInsets.only(
+              left: AppSpacing.lg,
+              right: AppSpacing.lg,
+              top: AppSpacing.lg,
+              bottom: AppSpacing.lg + MediaQuery.of(context).viewInsets.bottom,
+            ),
+            child: SizedBox(
+              height: 160,
+              child: Center(child: CircularProgressIndicator()),
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (_error != null || _period == null) {
+      return Container(
+        decoration: BoxDecoration(
+          color: AppColors.backgroundElevatedBase,
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(AppRadius.lg),
+            topRight: Radius.circular(AppRadius.lg),
+          ),
+        ),
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: EdgeInsets.only(
+              left: AppSpacing.lg,
+              right: AppSpacing.lg,
+              top: AppSpacing.lg,
+              bottom: AppSpacing.lg + MediaQuery.of(context).viewInsets.bottom,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Gagal memuat detail periode',
+                  style: TextStyle(
+                    fontSize: AppTypography.headingSmall,
+                    fontWeight: AppTypography.bold,
+                    color: AppColors.textBase,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                ElevatedButton(
+                  onPressed: _fetch,
+                  child: const Text('Coba lagi'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    // When loaded, return the original detail sheet directly (no extra padding wrapper)
+    return _PeriodDetailSheet(
+      period: _period!,
+      onEdit: () => widget.onEdit(_period!),
+      onDelete: () => widget.onDelete(_period!),
+      onToggleActive: (value) => widget.onToggleActive(_period!, value),
     );
   }
 }

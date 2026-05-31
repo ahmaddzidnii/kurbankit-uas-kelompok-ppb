@@ -328,8 +328,11 @@ class _CalculatorInputPageState extends State<CalculatorInputPage>
                   backgroundColor: AppColors.essentialBrightAccent,
                 ),
                 child: const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 16.0),
-                  child: Text('Lihat Hasil', style: TextStyle(fontSize: 16)),
+                  padding: EdgeInsets.symmetric(vertical: 4.0),
+                  child: Text(
+                    'Lihat Hasil',
+                    style: TextStyle(fontSize: 16, color: Colors.white),
+                  ),
                 ),
               ),
             ),

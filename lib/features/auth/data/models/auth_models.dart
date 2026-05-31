@@ -111,8 +111,15 @@ class ProfileMasjid {
   factory ProfileMasjid.fromJson(Map<String, dynamic> json) {
     return ProfileMasjid(
       id: json['id'] ?? '',
-      nama: json['nama'] ?? '',
-      status: json['status'] ?? '',
+      nama:
+          _readString(json, const [
+            'nama',
+            'name',
+            'mosqueName',
+            'namaMasjid',
+          ]) ??
+          '',
+      status: _readString(json, const ['status']) ?? '',
       rejectionReason: _readString(json, const [
         'rejectionReason',
         'reason',

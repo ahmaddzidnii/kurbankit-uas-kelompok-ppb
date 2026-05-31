@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:qurban_kit/core/configs/theme/theme.dart';
 import 'package:qurban_kit/features/auth/data/models/auth_models.dart';
+import 'package:qurban_kit/features/mosque_dashboard/data/models/period_model.dart';
+import 'package:qurban_kit/core/services/service_locator.dart';
 
 class AdminHomePage extends StatefulWidget {
   final UserData? user;
@@ -13,9 +15,28 @@ class AdminHomePage extends StatefulWidget {
 }
 
 class _AdminHomePageState extends State<AdminHomePage> {
+  PeriodModel? _activePeriod;
+  bool _isLoadingPeriod = true;
+
   @override
   void initState() {
     super.initState();
+    _loadActivePeriod();
+  }
+
+  Future<void> _loadActivePeriod() async {
+    setState(() => _isLoadingPeriod = true);
+    try {
+      final periods = await periodDataSource.getPeriods();
+      final actives = periods.where((p) => p.isActive).toList();
+      if (!mounted) return;
+      setState(() => _activePeriod = actives.isNotEmpty ? actives.first : null);
+    } catch (_) {
+      // keep existing UI if fetching fails
+    } finally {
+      if (!mounted) return;
+      setState(() => _isLoadingPeriod = false);
+    }
   }
 
   @override
@@ -101,28 +122,78 @@ class _AdminHomePageState extends State<AdminHomePage> {
           ),
           const SizedBox(height: AppSpacing.lg),
 
-          // Period name
-          const Text(
-            'Idul Adha 1447 H',
-            style: TextStyle(
-              fontSize: AppTypography.displaySmall,
-              fontWeight: AppTypography.bold,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.md),
-          Row(
-            children: [
-              const Text(
-                '27 Mei 2024 - 1447 H',
-                style: TextStyle(
-                  fontSize: AppTypography.bodyMedium,
-                  fontWeight: AppTypography.medium,
-                  color: Colors.white,
+          // Period name / loading state
+          if (_isLoadingPeriod) ...[
+            Row(
+              children: [
+                SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.0,
+                    color: Colors.white,
+                  ),
                 ),
+                const SizedBox(width: AppSpacing.md),
+                Text(
+                  'Memuat periode...',
+                  style: TextStyle(
+                    fontSize: AppTypography.bodyMedium,
+                    fontWeight: AppTypography.medium,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ] else if (_activePeriod == null) ...[
+            Text(
+              'Belum ada periode aktif',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: AppTypography.displaySmall,
+                fontWeight: AppTypography.bold,
+                color: Colors.white,
               ),
-            ],
-          ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Text(
+              'Aktifkan periode di menu Periode',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: AppTypography.bodyMedium,
+                fontWeight: AppTypography.medium,
+                color: Colors.white,
+              ),
+            ),
+          ] else ...[
+            Text(
+              _activePeriod!.displayTitle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: AppTypography.displaySmall,
+                fontWeight: AppTypography.bold,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Row(
+              children: [
+                Text(
+                  _activePeriod!.displaySubtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: AppTypography.bodyMedium,
+                    fontWeight: AppTypography.medium,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );
