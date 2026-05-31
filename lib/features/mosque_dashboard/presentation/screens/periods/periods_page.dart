@@ -149,7 +149,7 @@ class _PeriodsPageState extends State<PeriodsPage> {
   }
 
   void _showPeriodDetail(Map<String, dynamic> period) {
-    bool isEnabled = period['status'] == 'active';
+    bool isEnabled = period['isActive'] as bool;
 
     showModalBottomSheet(
       context: context,
