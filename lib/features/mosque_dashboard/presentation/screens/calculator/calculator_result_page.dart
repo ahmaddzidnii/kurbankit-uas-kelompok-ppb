@@ -566,8 +566,6 @@ class _CalculatorResultPageState extends State<CalculatorResultPage>
 
   String _buildCalculationNote(String templateId) {
     switch (templateId) {
-      case 'template_a':
-        return 'Perhitungan pada tab ini mengikuti bobot yang dimasukkan untuk sapi atau kambing secara terpisah, lalu dibagi menjadi 1/3 untuk Shohibul, 1/3 untuk Fakir Miskin, dan 1/3 untuk Warga Umum.';
       case 'template_b':
         return 'Perhitungan pada tab ini mengikuti bobot yang dimasukkan untuk sapi atau kambing secara terpisah, lalu dibagi menjadi 1/3 untuk Shohibul dan 2/3 untuk Masyarakat.';
       case 'template_c':

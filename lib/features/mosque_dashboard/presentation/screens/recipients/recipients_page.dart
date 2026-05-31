@@ -11,7 +11,7 @@ class RecipientsPage extends StatefulWidget {
 
 class _RecipientsPageState extends State<RecipientsPage> {
   late TextEditingController _searchController;
-  String _filterStatus = 'all'; // all, verified, pending
+  String _filterGroup = 'all'; // all, mustahiq, sohibul, lain_lain
 
   // Sample data - will be replaced with API calls
   final List<Map<String, dynamic>> _recipients = [
@@ -20,15 +20,13 @@ class _RecipientsPageState extends State<RecipientsPage> {
       'category': 'Mustahiq',
       'phone': '082123456789',
       'address': 'Jl. Kenanga No. 12, RT 01/RW 03',
-      'status': 'verified',
       'photoUrl': null,
     },
     {
       'name': 'Ahmad Suherma',
-      'category': 'Mustahiq',
+      'category': 'Sohibul',
       'phone': '081234567890',
       'address': 'Jl. Merdeka No. 5, RT 02/RW 02',
-      'status': 'verified',
       'photoUrl': null,
     },
     {
@@ -36,23 +34,20 @@ class _RecipientsPageState extends State<RecipientsPage> {
       'category': 'Mustahiq',
       'phone': '083456789012',
       'address': 'Jl. Ahmad Yani No. 23, RT 03/RW 01',
-      'status': 'pending',
       'photoUrl': null,
     },
     {
       'name': 'Muhammad Ali',
-      'category': 'Aidil Fitri',
+      'category': 'Lain Lain',
       'phone': '084567890123',
       'address': 'Jl. Diponegoro No. 8, RT 01/RW 04',
-      'status': 'verified',
       'photoUrl': null,
     },
     {
       'name': 'Aminah Putri',
-      'category': 'Mustahiq',
+      'category': 'Lain Lain',
       'phone': '085678901234',
       'address': 'Jl. Sukarno No. 15, RT 02/RW 03',
-      'status': 'pending',
       'photoUrl': null,
     },
   ];
@@ -74,10 +69,22 @@ class _RecipientsPageState extends State<RecipientsPage> {
       final matchesSearch = recipient['name'].toLowerCase().contains(
         _searchController.text.toLowerCase(),
       );
-      final matchesStatus =
-          _filterStatus == 'all' || recipient['status'] == _filterStatus;
-      return matchesSearch && matchesStatus;
+      final matchesGroup =
+          _filterGroup == 'all' ||
+          _normalizeCategory(recipient['category']) == _filterGroup;
+      return matchesSearch && matchesGroup;
     }).toList();
+  }
+
+  String _normalizeCategory(String category) {
+    final value = category.toLowerCase();
+    if (value == 'mustahiq') {
+      return 'mustahiq';
+    }
+    if (value == 'sohibul') {
+      return 'sohibul';
+    }
+    return 'lain_lain';
   }
 
   @override
@@ -139,7 +146,7 @@ class _RecipientsPageState extends State<RecipientsPage> {
       backgroundColor: AppColors.backgroundBase,
       elevation: 0,
       title: const Text(
-        'Mustahiq',
+        'Data Kurban',
         style: TextStyle(
           fontSize: AppTypography.headingLarge,
           fontWeight: AppTypography.semiBold,
@@ -183,14 +190,25 @@ class _RecipientsPageState extends State<RecipientsPage> {
     final tabs = [
       {'label': 'Semua', 'value': 'all', 'count': _recipients.length},
       {
-        'label': 'Verified',
-        'value': 'verified',
-        'count': _recipients.where((r) => r['status'] == 'verified').length,
+        'label': 'Mustahiq',
+        'value': 'mustahiq',
+        'count': _recipients
+            .where((r) => _normalizeCategory(r['category']) == 'mustahiq')
+            .length,
       },
       {
-        'label': 'Pending',
-        'value': 'pending',
-        'count': _recipients.where((r) => r['status'] == 'pending').length,
+        'label': 'Sohibul',
+        'value': 'sohibul',
+        'count': _recipients
+            .where((r) => _normalizeCategory(r['category']) == 'sohibul')
+            .length,
+      },
+      {
+        'label': 'Lain Lain',
+        'value': 'lain_lain',
+        'count': _recipients
+            .where((r) => _normalizeCategory(r['category']) == 'lain_lain')
+            .length,
       },
     ];
 
@@ -200,12 +218,12 @@ class _RecipientsPageState extends State<RecipientsPage> {
         children: [
           ...tabs.map((tab) {
             final tabValue = (tab['value'] as String?) ?? 'all';
-            final isSelected = _filterStatus == tabValue;
+            final isSelected = _filterGroup == tabValue;
             return Padding(
               padding: const EdgeInsets.only(right: AppSpacing.md),
               child: GestureDetector(
                 onTap: () {
-                  setState(() => _filterStatus = tabValue);
+                  setState(() => _filterGroup = tabValue);
                 },
                 child: Container(
                   padding: const EdgeInsets.symmetric(
@@ -242,8 +260,6 @@ class _RecipientsPageState extends State<RecipientsPage> {
   }
 
   Widget _buildRecipientCard(Map<String, dynamic> recipient) {
-    final isVerified = recipient['status'] == 'verified';
-
     return GestureDetector(
       onTap: () {
         _showRecipientDetail(recipient);
@@ -285,39 +301,12 @@ class _RecipientsPageState extends State<RecipientsPage> {
                 children: [
                   Row(
                     children: [
-                      Expanded(
-                        child: Text(
-                          recipient['name'],
-                          style: const TextStyle(
-                            fontSize: AppTypography.bodyMedium,
-                            fontWeight: AppTypography.bold,
-                            color: AppColors.textBase,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.sm),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.sm,
-                          vertical: AppSpacing.xs,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isVerified
-                              ? AppColors.essentialPositive.withValues(
-                                  alpha: 0.1,
-                                )
-                              : const Color(0xFFFFA42B).withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(AppRadius.xs),
-                        ),
-                        child: Text(
-                          isVerified ? 'Verified' : 'Pending',
-                          style: TextStyle(
-                            fontSize: AppTypography.labelSmall,
-                            fontWeight: AppTypography.semiBold,
-                            color: isVerified
-                                ? AppColors.essentialPositive
-                                : const Color(0xFFFFA42B),
-                          ),
+                      Text(
+                        recipient['name'],
+                        style: const TextStyle(
+                          fontSize: AppTypography.bodyMedium,
+                          fontWeight: AppTypography.bold,
+                          color: AppColors.textBase,
                         ),
                       ),
                     ],
@@ -444,11 +433,6 @@ class _RecipientsPageState extends State<RecipientsPage> {
               _buildDetailRow('No. Telepon', recipient['phone']),
               const SizedBox(height: AppSpacing.md),
               _buildDetailRow('Alamat', recipient['address']),
-              const SizedBox(height: AppSpacing.md),
-              _buildDetailRow(
-                'Status',
-                recipient['status'] == 'verified' ? 'Terverifikasi' : 'Pending',
-              ),
               const SizedBox(height: AppSpacing.xl),
               Row(
                 children: [

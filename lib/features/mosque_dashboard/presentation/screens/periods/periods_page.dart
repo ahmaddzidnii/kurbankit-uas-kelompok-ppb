@@ -15,26 +15,22 @@ class _PeriodsPageState extends State<PeriodsPage> {
     {
       'name': 'Idul Adha 1447 H',
       'date': 'Idul Adha, 27 Mei 2026',
-      'status': 'active',
-      'progress': 65,
+      'isActive': true,
     },
     {
       'name': 'Idul Adha 1447 H',
       'date': 'Idul Adha, 27 Mei 2026',
-      'status': 'pending',
-      'progress': 45,
+      'isActive': false,
     },
     {
       'name': 'Idul Adha 1447 H',
       'date': 'Idul Adha, 27 Mei 2026',
-      'status': 'completed',
-      'progress': 100,
+      'isActive': false,
     },
     {
       'name': 'Idul Adha 1446 H',
       'date': 'Idul Adha, 27 Mei 2025',
-      'status': 'completed',
-      'progress': 100,
+      'isActive': false,
     },
   ];
 
@@ -97,27 +93,7 @@ class _PeriodsPageState extends State<PeriodsPage> {
   }
 
   Widget _buildPeriodCard(Map<String, dynamic> period, int index) {
-    final isActive = period['status'] == 'active';
-    final isPending = period['status'] == 'pending';
-    final isCompleted = period['status'] == 'completed';
-
-    Color statusColor;
-    String statusLabel;
-    Color statusBgColor;
-
-    if (isActive) {
-      statusColor = Colors.white;
-      statusLabel = 'ACTIVE';
-      statusBgColor = AppColors.essentialBrightAccent;
-    } else if (isPending) {
-      statusColor = Colors.white;
-      statusLabel = 'PENDING';
-      statusBgColor = const Color(0xFFFFA42B);
-    } else {
-      statusColor = Colors.white;
-      statusLabel = 'COMPLETED';
-      statusBgColor = AppColors.essentialPositive.withOpacity(0.7);
-    }
+    final isActive = period['isActive'] as bool;
 
     return GestureDetector(
       onTap: () {
@@ -164,60 +140,7 @@ class _PeriodsPageState extends State<PeriodsPage> {
                     ],
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.md,
-                    vertical: AppSpacing.sm,
-                  ),
-                  decoration: BoxDecoration(
-                    color: statusBgColor,
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
-                  ),
-                  child: Text(
-                    statusLabel,
-                    style: TextStyle(
-                      fontSize: AppTypography.labelSmall,
-                      fontWeight: AppTypography.bold,
-                      color: statusColor,
-                      letterSpacing: 0.3,
-                    ),
-                  ),
-                ),
               ],
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Progress',
-                  style: TextStyle(
-                    fontSize: AppTypography.bodyMedium,
-                    fontWeight: AppTypography.medium,
-                    color: AppColors.textBase,
-                  ),
-                ),
-                Text(
-                  '${period['progress']}%',
-                  style: const TextStyle(
-                    fontSize: AppTypography.bodyMedium,
-                    fontWeight: AppTypography.bold,
-                    color: AppColors.textBase,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-              child: LinearProgressIndicator(
-                value: period['progress'] / 100,
-                minHeight: 6,
-                backgroundColor: AppColors.decorativeSubdued,
-                valueColor: AlwaysStoppedAnimation<Color>(
-                  isCompleted ? statusBgColor : statusBgColor,
-                ),
-              ),
             ),
           ],
         ),
@@ -226,77 +149,114 @@ class _PeriodsPageState extends State<PeriodsPage> {
   }
 
   void _showPeriodDetail(Map<String, dynamic> period) {
+    bool isEnabled = period['status'] == 'active';
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: BoxDecoration(
-          color: AppColors.backgroundElevatedBase,
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(AppRadius.lg),
-            topRight: Radius.circular(AppRadius.lg),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) => Container(
+          decoration: BoxDecoration(
+            color: AppColors.backgroundElevatedBase,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(AppRadius.lg),
+              topRight: Radius.circular(AppRadius.lg),
+            ),
           ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Detail Periode',
-                    style: TextStyle(
-                      fontSize: AppTypography.headingMedium,
-                      fontWeight: AppTypography.bold,
-                      color: AppColors.textBase,
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () => context.pop(),
-                    child: Icon(Icons.close_rounded, color: AppColors.textBase),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              _buildDetailRow('Nama Periode', period['name']),
-              const SizedBox(height: AppSpacing.md),
-              _buildDetailRow('Tanggal', period['date']),
-              const SizedBox(height: AppSpacing.md),
-              _buildDetailRow('Status', period['status'].toUpperCase()),
-              const SizedBox(height: AppSpacing.xl),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.essentialBrightAccent,
-                    padding: const EdgeInsets.symmetric(
-                      vertical: AppSpacing.md,
-                    ),
-                  ),
-                  onPressed: () {
-                    context.pop();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('View Details - Coming Soon'),
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Detail Periode',
+                      style: TextStyle(
+                        fontSize: AppTypography.headingMedium,
+                        fontWeight: AppTypography.bold,
+                        color: AppColors.textBase,
                       ),
-                    );
-                  },
-                  child: const Text(
-                    'Lihat Detail Lengkap',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: AppTypography.bold,
+                    ),
+                    GestureDetector(
+                      onTap: () => context.pop(),
+                      child: Icon(
+                        Icons.close_rounded,
+                        color: AppColors.textBase,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                _buildDetailRow('Nama Periode', period['name']),
+                const SizedBox(height: AppSpacing.md),
+                _buildDetailRow('Tanggal', period['date']),
+                const SizedBox(height: AppSpacing.md),
+                _buildActivationRow(isEnabled, (value) {
+                  setModalState(() {
+                    isEnabled = value;
+                    period['status'] = value ? 'active' : 'pending';
+                  });
+                  setState(() {});
+                }),
+                const SizedBox(height: AppSpacing.xl),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.essentialBrightAccent,
+                      padding: const EdgeInsets.symmetric(
+                        vertical: AppSpacing.md,
+                      ),
+                    ),
+                    onPressed: () {
+                      context.pop();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('View Details - Coming Soon'),
+                        ),
+                      );
+                    },
+                    child: const Text(
+                      'Lihat Detail Lengkap',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: AppTypography.bold,
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildActivationRow(bool isEnabled, ValueChanged<bool> onChanged) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          'Aktifkan',
+          style: TextStyle(
+            fontSize: AppTypography.bodyMedium,
+            color: AppColors.textSubdued,
+            fontWeight: AppTypography.medium,
+          ),
+        ),
+        Switch(
+          value: isEnabled,
+          onChanged: onChanged,
+          activeColor: Colors.white,
+          activeTrackColor: AppColors.essentialBrightAccent,
+          inactiveThumbColor: Colors.white,
+          inactiveTrackColor: AppColors.decorativeSubdued,
+        ),
+      ],
     );
   }
 

@@ -120,7 +120,7 @@ class _MosqueAdminDashboardState extends State<MosqueAdminDashboard> {
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.people_rounded),
-            label: 'Mustahiq',
+            label: 'Data',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person_rounded),

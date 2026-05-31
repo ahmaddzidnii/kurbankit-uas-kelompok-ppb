@@ -40,10 +40,6 @@ class _AdminHomePageState extends State<AdminHomePage> {
                 // Quick actions
                 _buildQuickActionsSection(),
                 const SizedBox(height: AppSpacing.xl),
-
-                // Recent activity
-                _buildRecentActivitySection(),
-                const SizedBox(height: AppSpacing.xl),
               ],
             ),
           ),
@@ -115,47 +111,6 @@ class _AdminHomePageState extends State<AdminHomePage> {
             ),
           ),
           const SizedBox(height: AppSpacing.md),
-
-          // Progress section
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Progress: 325/500 Mustahiq',
-                    style: TextStyle(
-                      fontSize: AppTypography.bodyMedium,
-                      fontWeight: AppTypography.medium,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const Text(
-                    '65%',
-                    style: TextStyle(
-                      fontSize: AppTypography.bodyMedium,
-                      fontWeight: AppTypography.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-                child: LinearProgressIndicator(
-                  value: 0.65,
-                  minHeight: 8,
-                  backgroundColor: Colors.white.withOpacity(0.3),
-                  valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.lg),
-
-          // Days remaining
           Row(
             children: [
               const Text(
@@ -350,113 +305,6 @@ class _AdminHomePageState extends State<AdminHomePage> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildRecentActivitySection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Riwayat Aktivitas',
-              style: TextStyle(
-                fontSize: AppTypography.headingMedium,
-                fontWeight: AppTypography.semiBold,
-                color: AppColors.textBase,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: AppSpacing.md),
-        _buildActivityItem(
-          icon: Icons.verified_rounded,
-          iconColor: AppColors.essentialPositive,
-          title: 'Masjid Al-Barkah verified',
-          subtitle: 'Approved for Period 1447 H',
-          timestamp: '2m ago',
-        ),
-        const SizedBox(height: AppSpacing.md),
-        _buildActivityItem(
-          icon: Icons.person_add_rounded,
-          iconColor: AppColors.essentialBrightAccent,
-          title: 'New recipient added',
-          subtitle: 'Fatimah Zahra • Mustahiq',
-          timestamp: '1h ago',
-        ),
-        const SizedBox(height: AppSpacing.md),
-        _buildActivityItem(
-          icon: Icons.warning_rounded,
-          iconColor: const Color(0xFFED2C3F),
-          title: 'Data mismatch alert',
-          subtitle: 'Check Mosque Al-Ikhlas documents',
-          timestamp: '5h ago',
-        ),
-      ],
-    );
-  }
-
-  Widget _buildActivityItem({
-    required IconData icon,
-    required Color iconColor,
-    required String title,
-    required String subtitle,
-    required String timestamp,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: AppColors.backgroundElevatedBase,
-        border: Border.all(color: AppColors.decorativeSubdued, width: 1),
-        borderRadius: BorderRadius.circular(AppRadius.md),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: iconColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-            ),
-            child: Icon(icon, color: iconColor, size: 20),
-          ),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: AppTypography.bodyMedium,
-                    fontWeight: AppTypography.semiBold,
-                    color: AppColors.textBase,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                    fontSize: AppTypography.bodySmall,
-                    color: AppColors.textSubdued,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          Text(
-            timestamp,
-            style: TextStyle(
-              fontSize: AppTypography.bodySmall,
-              color: AppColors.textSubdued,
-            ),
-          ),
-        ],
       ),
     );
   }

@@ -6,22 +6,15 @@ class CalculatorService {
   // Template definitions
   static final List<CalculatorTemplate> templates = [
     CalculatorTemplate(
-      id: 'template_a',
-      name: 'Template A: Standar',
-      description: 'Standar (1/3 Shohibul, 1/3 Fakir Miskin, 1/3 Warga Umum)',
-      icon: '🏛️',
-      categories: ['Shohibul', 'Fakir Miskin', 'Warga Umum'],
-    ),
-    CalculatorTemplate(
       id: 'template_b',
-      name: 'Template B: Sederhana',
+      name: 'Sederhana',
       description: 'Sederhana (1/3 Shohibul, 2/3 Masyarakat)',
       icon: '👥',
       categories: ['Shohibul', 'Masyarakat'],
     ),
     CalculatorTemplate(
       id: 'template_c',
-      name: 'Template C: Kustom',
+      name: 'Kustom',
       description:
           'Kustom sesuai musyawarah, total 100%, tanpa melebihi total qurban',
       icon: '⚙️',
@@ -41,27 +34,6 @@ class CalculatorService {
   // Get default recipient categories for template
   static List<RecipientCategory> getDefaultCategories(String templateId) {
     switch (templateId) {
-      case 'template_a':
-        return [
-          RecipientCategory(
-            name: 'Shohibul',
-            icon: '🙎',
-            description: 'Pekurban yang berhak menerima 1/3 bagian',
-            count: 0,
-          ),
-          RecipientCategory(
-            name: 'Fakir Miskin',
-            icon: '🙎',
-            description: 'Penerima prioritas mustahik zakat',
-            count: 0,
-          ),
-          RecipientCategory(
-            name: 'Warga Umum',
-            icon: '👨‍👩‍👧‍👦',
-            description: 'Masyarakat umum di lingkungan sekitar',
-            count: 0,
-          ),
-        ];
       case 'template_b':
         return [
           RecipientCategory(
@@ -109,30 +81,6 @@ class CalculatorService {
     Map<String, double> perBagWeight = {};
 
     switch (templateId) {
-      case 'template_a':
-        // Alokasi: 1/3 Shohibul, 1/3 Fakir Miskin, 1/3 Warga Umum
-        allocations['Shohibul'] = totalWeight / 3;
-        allocations['Fakir Miskin'] = totalWeight / 3;
-        allocations['Warga Umum'] = totalWeight / 3;
-
-        // Per bag weight
-        perBagWeight['Shohibul'] =
-            recipientCounts['Shohibul'] != null &&
-                recipientCounts['Shohibul']! > 0
-            ? allocations['Shohibul']! / recipientCounts['Shohibul']!
-            : 0;
-        perBagWeight['Fakir Miskin'] =
-            recipientCounts['Fakir Miskin'] != null &&
-                recipientCounts['Fakir Miskin']! > 0
-            ? allocations['Fakir Miskin']! / recipientCounts['Fakir Miskin']!
-            : 0;
-        perBagWeight['Warga Umum'] =
-            recipientCounts['Warga Umum'] != null &&
-                recipientCounts['Warga Umum']! > 0
-            ? allocations['Warga Umum']! / recipientCounts['Warga Umum']!
-            : 0;
-        break;
-
       case 'template_b':
         // Alokasi: 1/3 Shohibul, 2/3 Masyarakat
         allocations['Shohibul'] = totalWeight / 3;
