@@ -1,28 +1,52 @@
+import 'package:dio/dio.dart';
+
 class MosqueRegistrationRequest {
-  final String name;
-  final String? operationalNumber;
-  final String address;
-  final String province;
-  final String city;
-  final String? photoPath; // Local file path for image upload
+  final String nama;
+  final String? nomorSk;
+  final String alamat;
+  final String idDesa;
+  final String? fotoMasjidPath;
+  final String? fotoDokumenSkPath;
 
   MosqueRegistrationRequest({
-    required this.name,
-    this.operationalNumber,
-    required this.address,
-    required this.province,
-    required this.city,
-    this.photoPath,
+    required this.nama,
+    this.nomorSk,
+    required this.alamat,
+    required this.idDesa,
+    this.fotoMasjidPath,
+    this.fotoDokumenSkPath,
   });
 
-  Map<String, dynamic> toJson() {
-    return {
-      'name': name,
-      'operationalNumber': operationalNumber,
-      'address': address,
-      'province': province,
-      'city': city,
+  FormData toFormData() {
+    final payload = <String, dynamic>{
+      'id_desa': idDesa,
+      'nama': nama,
+      'alamat': alamat,
     };
+
+    if (nomorSk != null && nomorSk!.isNotEmpty) {
+      payload['nomor_sk'] = nomorSk;
+    }
+
+    if (fotoMasjidPath != null && fotoMasjidPath!.isNotEmpty) {
+      payload['foto_masjid'] = MultipartFile.fromFileSync(
+        fotoMasjidPath!,
+        filename: _fileName(fotoMasjidPath!),
+      );
+    }
+
+    if (fotoDokumenSkPath != null && fotoDokumenSkPath!.isNotEmpty) {
+      payload['foto_dokumen_sk'] = MultipartFile.fromFileSync(
+        fotoDokumenSkPath!,
+        filename: _fileName(fotoDokumenSkPath!),
+      );
+    }
+
+    return FormData.fromMap(payload);
+  }
+
+  String _fileName(String path) {
+    return path.split(RegExp(r'[\\/]+')).last;
   }
 }
 

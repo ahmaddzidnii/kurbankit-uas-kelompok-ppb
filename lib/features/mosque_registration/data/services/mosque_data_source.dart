@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:qurban_kit/core/configs/exceptions.dart';
 import 'package:qurban_kit/core/services/api_client.dart';
 import 'package:qurban_kit/features/mosque_registration/data/models/mosque_model.dart';
@@ -39,20 +40,22 @@ class MosqueDataSourceImpl implements MosqueDataSource {
   @override
   Future<MosqueModel> registerMosque(MosqueRegistrationRequest request) async {
     try {
-      // TODO: Implement multipart form data upload for photo
       final response = await _apiClient.post(
-        '$_baseEndpoint/register',
-        data: request.toJson(),
+        '/masjid/permintaan',
+        data: request.toFormData(),
+        options: Options(headers: {'Content-Type': 'multipart/form-data'}),
       );
 
-      if (response.statusCode == 201 || response.statusCode == 200) {
-        return MosqueModel.fromJson(response.data['data'] ?? response.data);
-      } else {
-        throw ServerException(
-          message: response.data['message'] ?? 'Failed to register mosque',
-          statusCode: response.statusCode ?? 500,
-        );
+      if (response is Map<String, dynamic>) {
+        final data = response['data'] ?? response;
+        if (data is Map<String, dynamic>) {
+          return MosqueModel.fromJson(data);
+        }
       }
+
+      throw ServerException(
+        message: 'Failed to register mosque: unexpected response format',
+      );
     } catch (e) {
       if (e is AppException) {
         rethrow;

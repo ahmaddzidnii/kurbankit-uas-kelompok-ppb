@@ -62,12 +62,16 @@ class ApiClient {
   }
 
   /// POST request
-  Future<dynamic> post(String endpoint, {required dynamic data}) async {
+  Future<dynamic> post(
+    String endpoint, {
+    required dynamic data,
+    Options? options,
+  }) async {
     try {
       final response = await _dio.post(
         endpoint,
         data: data,
-        options: _getOptions(),
+        options: _buildOptions(options),
       );
       return response.data; // Return langsung response data
     } on DioException catch (e) {
@@ -87,6 +91,23 @@ class ApiClient {
     } on DioException catch (e) {
       _handleError(e);
     }
+  }
+
+  Options _buildOptions(Options? options) {
+    final mergedHeaders = <String, dynamic>{
+      if (_authToken != null) 'Authorization': 'Bearer $_authToken',
+    };
+
+    if (options?.headers != null) {
+      mergedHeaders.addAll(options!.headers!);
+    }
+
+    if (!mergedHeaders.containsKey('Content-Type')) {
+      mergedHeaders['Content-Type'] = 'application/json';
+    }
+
+    return options?.copyWith(headers: mergedHeaders) ??
+        Options(headers: mergedHeaders);
   }
 
   /// DELETE request
@@ -141,8 +162,13 @@ class ApiClient {
 
       // 422 Validation Error
       if (statusCode == 422) {
+        final validationMessage =
+            data?['message'] ??
+            _extractValidationMessage(data?['errors']) ??
+            'Validasi gagal';
+
         throw ValidationException(
-          message: data?['message'] ?? 'Validasi gagal',
+          message: validationMessage,
           errors: data?['errors'],
         );
       }
@@ -157,5 +183,21 @@ class ApiClient {
 
     // No internet
     throw NetworkException(message: 'Tidak ada koneksi internet');
+  }
+
+  String? _extractValidationMessage(dynamic errors) {
+    if (errors is Map<String, dynamic> && errors.isNotEmpty) {
+      final firstEntry = errors.entries.first;
+      final field = firstEntry.key.toString();
+      final value = firstEntry.value;
+
+      if (value is List && value.isNotEmpty) {
+        return '$field: ${value.first}';
+      }
+
+      return '$field: $value';
+    }
+
+    return null;
   }
 }

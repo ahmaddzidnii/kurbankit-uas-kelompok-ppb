@@ -3,14 +3,17 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:qurban_kit/core/configs/theme/theme.dart';
+import 'package:qurban_kit/core/configs/exceptions.dart';
 import 'package:qurban_kit/core/services/service_locator.dart';
 import 'package:qurban_kit/core/services/user_role_service.dart';
 import 'package:qurban_kit/features/admin_dashboard/presentation/screens/admin_profile_tab.dart';
 import 'package:qurban_kit/features/auth/data/models/auth_models.dart';
 import 'package:qurban_kit/features/auth/data/services/auth_repository.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:qurban_kit/features/mosque_registration/data/models/mosque_registration_request_model.dart';
+import 'package:qurban_kit/features/mosque_registration/data/services/mosque_repository.dart';
 import 'package:qurban_kit/features/mosque_registration/data/models/wilayah_model.dart';
 import 'package:qurban_kit/features/mosque_registration/data/services/wilayah_data_source.dart';
+import 'package:image_picker/image_picker.dart';
 
 class MosqueRegistrationPage extends StatefulWidget {
   const MosqueRegistrationPage({super.key});
@@ -582,18 +585,90 @@ class _MosqueRegistrationPageState extends State<MosqueRegistrationPage> {
     );
   }
 
-  void _submitForm() {
-    if (_formKey.currentState!.validate()) {
-      setState(() => _isLoading = true);
-
-      // TODO: Call API to submit registration
-      Future.delayed(const Duration(seconds: 2), () {
-        setState(() => _isLoading = false);
-
-        // Show success dialog
-        _showSuccessDialog();
-      });
+  Future<void> _submitForm() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
     }
+
+    if (_selectedVillage == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Silakan pilih desa/kelurahan terlebih dahulu.'),
+        ),
+      );
+      return;
+    }
+
+    if (_mosquePhotoPath == null || _skPhotoPath == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Silakan unggah foto masjid dan dokumen SK.'),
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final request = MosqueRegistrationRequest(
+        nama: _mosqueName.text.trim(),
+        nomorSk: _operationalNumber.text.trim().isEmpty
+            ? null
+            : _operationalNumber.text.trim(),
+        alamat: _address.text.trim(),
+        idDesa: _selectedVillage!,
+        fotoMasjidPath: _mosquePhotoPath,
+        fotoDokumenSkPath: _skPhotoPath,
+      );
+
+      await getIt<MosqueRepository>().registerMosque(request);
+
+      if (!mounted) return;
+
+      _showSuccessDialog();
+    } catch (e) {
+      if (!mounted) return;
+
+      final message = _resolveErrorMessage(
+        e,
+        'Gagal mengirim data pendaftaran',
+      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  String _resolveErrorMessage(Object error, String fallback) {
+    if (error is ValidationException) {
+      final errors = error.errors;
+      if (errors != null && errors.isNotEmpty) {
+        final firstEntry = errors.entries.first;
+        final field = firstEntry.key.toString();
+        final value = firstEntry.value;
+
+        if (value is List && value.isNotEmpty) {
+          return '$field: ${value.first}';
+        }
+
+        return '$field: $value';
+      }
+
+      if (error.message.trim().isNotEmpty) {
+        return error.message;
+      }
+    }
+
+    if (error is AppException && error.message.trim().isNotEmpty) {
+      return error.message;
+    }
+
+    return fallback;
   }
 
   void _handleLogout() {
