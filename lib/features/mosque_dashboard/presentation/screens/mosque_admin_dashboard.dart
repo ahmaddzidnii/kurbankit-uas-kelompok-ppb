@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:qurban_kit/core/configs/theme/theme.dart';
+import 'package:qurban_kit/core/services/cache_service.dart';
 import 'package:qurban_kit/core/services/service_locator.dart';
 import 'package:qurban_kit/core/services/user_role_service.dart';
 import 'package:qurban_kit/features/auth/data/models/auth_models.dart';
@@ -21,6 +22,8 @@ class _MosqueAdminDashboardState extends State<MosqueAdminDashboard> {
   int _selectedIndex = 0;
   UserData? _user;
   bool _isLoading = false;
+  final _cacheService = CacheService();
+  static const _userCacheKey = 'user_profile';
 
   @override
   void initState() {
@@ -48,18 +51,28 @@ class _MosqueAdminDashboardState extends State<MosqueAdminDashboard> {
   Future<void> _redirectToLogin() async {
     await authRepository.clearTokens();
     await UserRoleService.clearUserRoleData();
+    _cacheService.clear(); // Clear semua cache saat logout
 
     if (mounted) {
       context.go('/auth');
     }
   }
 
-  Future<void> _fetchUserProfile() async {
+  Future<void> _fetchUserProfile({bool forceRefresh = false}) async {
     setState(() => _isLoading = true);
 
     try {
-      final user = await authRepository.getProfile();
-      if (user != null) {
+      if (forceRefresh) {
+        _cacheService.invalidate(_userCacheKey);
+      }
+
+      final user = await _cacheService.get<UserData>(
+        key: _userCacheKey,
+        compute: () => authRepository.getProfile().then((u) => u!),
+        ttl: const Duration(minutes: 10),
+      );
+
+      if (user != null && mounted) {
         setState(() => _user = user);
       }
     } catch (e) {
@@ -72,14 +85,33 @@ class _MosqueAdminDashboardState extends State<MosqueAdminDashboard> {
   }
 
   void _onNavTapped(int index) {
-    setState(() => _selectedIndex = index);
+    if (_selectedIndex == index) {
+      return; // Jangan rebuild jika index sama
+    }
+
+    setState(() {
+      _selectedIndex = index;
+    });
+
+    // Invalidate cache tertentu saat berpindah tab
+    // Berguna kalau ada update di background
+    switch (index) {
+      case 1: // Periods tab
+        // Cache periods akan di-update saat pull-to-refresh atau interval
+        break;
+      case 2: // Profile tab
+        // Profile bisa di-cache lebih lama
+        break;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    // Build pages dengan UniqueKey untuk memastikan state tidak nyangkut
+    // Tapi pages sudah cache di level data, jadi FutureBuilder bisa reuse
     final pages = [
       AdminHomePage(user: _user),
-      const PeriodsPage(),
+      const PeriodsPage(), // Gunakan cache dari PeriodsPage
       MosqueProfilePage(user: _user),
     ];
 

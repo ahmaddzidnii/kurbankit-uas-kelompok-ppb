@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:qurban_kit/core/configs/exceptions.dart';
 import 'package:qurban_kit/core/configs/theme/theme.dart';
+import 'package:qurban_kit/core/services/cache_service.dart';
 import 'package:qurban_kit/core/services/service_locator.dart';
 import 'package:qurban_kit/features/mosque_dashboard/data/models/period_model.dart';
 
@@ -14,6 +15,8 @@ class PeriodsPage extends StatefulWidget {
 
 class _PeriodsPageState extends State<PeriodsPage> {
   late Future<List<PeriodModel>> _periodsFuture;
+  final _cacheService = CacheService();
+  static const _cacheKey = 'periods_list';
 
   @override
   void initState() {
@@ -21,13 +24,21 @@ class _PeriodsPageState extends State<PeriodsPage> {
     _periodsFuture = _loadPeriods();
   }
 
-  Future<List<PeriodModel>> _loadPeriods() {
-    return periodDataSource.getPeriods();
+  Future<List<PeriodModel>> _loadPeriods({bool forceRefresh = false}) {
+    if (forceRefresh) {
+      _cacheService.invalidate(_cacheKey);
+    }
+
+    return _cacheService.get<List<PeriodModel>>(
+      key: _cacheKey,
+      compute: () => periodDataSource.getPeriods(),
+      ttl: const Duration(minutes: 5),
+    );
   }
 
   Future<void> _refreshPeriods({bool showMessage = false}) async {
     setState(() {
-      _periodsFuture = _loadPeriods();
+      _periodsFuture = _loadPeriods(forceRefresh: true);
     });
 
     if (showMessage && mounted) {
@@ -39,7 +50,7 @@ class _PeriodsPageState extends State<PeriodsPage> {
 
   Future<void> _reloadPeriods() async {
     setState(() {
-      _periodsFuture = _loadPeriods();
+      _periodsFuture = _loadPeriods(forceRefresh: true);
     });
     await _periodsFuture;
   }
@@ -344,6 +355,11 @@ class _PeriodsPageState extends State<PeriodsPage> {
     }
 
     return fallback;
+  }
+
+  // Static method untuk invalidate cache dari luar (e.g., dari dashboard)
+  static void invalidateCache() {
+    CacheService().invalidate(_cacheKey);
   }
 
   @override
