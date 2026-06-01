@@ -43,7 +43,7 @@ class _CalculatorResultPageState extends State<CalculatorResultPage>
         title: Text(
           widget.comparisonResult.kelompokName != null &&
                   widget.comparisonResult.kelompokName!.isNotEmpty
-              ? 'Hasil Perhitungan - ${widget.comparisonResult.kelompokName}'
+              ? '${widget.comparisonResult.kelompokName}'
               : 'Hasil Perhitungan',
           style: const TextStyle(
             color: AppColors.textBase,
@@ -59,6 +59,8 @@ class _CalculatorResultPageState extends State<CalculatorResultPage>
             labelColor: AppColors.essentialBrightAccent,
             unselectedLabelColor: AppColors.textSubdued,
             indicatorColor: AppColors.essentialBrightAccent,
+            dividerColor: Colors.transparent,
+            indicatorSize: TabBarIndicatorSize.tab,
             tabs: const [
               Tab(text: 'Sapi'),
               Tab(text: 'Kambing'),
@@ -163,7 +165,7 @@ class _CalculatorResultPageState extends State<CalculatorResultPage>
                       ),
                       const SizedBox(width: AppSpacing.sm),
                       Text(
-                        'Ready to distribute in ${result.totalBags} bags',
+                        'Siap untuk dibagi ke ${result.totalBags} plastik',
                         style: const TextStyle(
                           fontSize: AppTypography.bodySmall,
                           fontWeight: AppTypography.semiBold,
@@ -187,10 +189,6 @@ class _CalculatorResultPageState extends State<CalculatorResultPage>
                   fontWeight: AppTypography.semiBold,
                   color: AppColors.textBase,
                 ),
-              ),
-              const Icon(
-                Icons.tune_rounded,
-                color: AppColors.essentialBrightAccent,
               ),
             ],
           ),
@@ -283,7 +281,7 @@ class _CalculatorResultPageState extends State<CalculatorResultPage>
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'Ringkasan per Tab',
+              'Langhkah 4 dari 4',
               style: TextStyle(
                 fontSize: AppTypography.bodySmall,
                 color: AppColors.textSubdued,
@@ -395,21 +393,21 @@ class _CalculatorResultPageState extends State<CalculatorResultPage>
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Allocation Progress',
+                'Ringkasan Distribusi',
                 style: TextStyle(
                   fontSize: AppTypography.bodyMedium,
                   fontWeight: AppTypography.semiBold,
                   color: AppColors.textBase,
                 ),
               ),
-              Text(
-                'TOTAL PERSENTASE: ${(ratio * 100).toStringAsFixed(0)}%',
-                style: TextStyle(
-                  fontSize: AppTypography.labelSmall,
-                  fontWeight: AppTypography.semiBold,
-                  color: AppColors.essentialBrightAccent,
-                ),
-              ),
+              // Text(
+              //   'TOTAL PERSENTASE: ${(ratio * 100).toStringAsFixed(0)}%',
+              //   style: TextStyle(
+              //     fontSize: AppTypography.labelSmall,
+              //     fontWeight: AppTypography.semiBold,
+              //     color: AppColors.essentialBrightAccent,
+              //   ),
+              // ),
             ],
           ),
           const SizedBox(height: AppSpacing.md),
@@ -499,7 +497,7 @@ class _CalculatorResultPageState extends State<CalculatorResultPage>
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.essentialBrightAccent,
-              padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
+
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(AppRadius.md),
               ),
@@ -522,44 +520,6 @@ class _CalculatorResultPageState extends State<CalculatorResultPage>
           ),
         ),
         const SizedBox(height: AppSpacing.md),
-        SizedBox(
-          width: double.infinity,
-          child: OutlinedButton(
-            onPressed: () {
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(const SnackBar(content: Text('Hasil dibagikan')));
-            },
-            style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppRadius.md),
-              ),
-              side: const BorderSide(
-                color: AppColors.essentialBrightAccent,
-                width: 2,
-              ),
-            ),
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.share_rounded,
-                  color: AppColors.essentialBrightAccent,
-                ),
-                SizedBox(width: AppSpacing.sm),
-                Text(
-                  'Bagikan Hasil',
-                  style: TextStyle(
-                    color: AppColors.essentialBrightAccent,
-                    fontSize: AppTypography.bodyMedium,
-                    fontWeight: AppTypography.semiBold,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
       ],
     );
   }
@@ -593,20 +553,6 @@ class _CalculatorResultPageState extends State<CalculatorResultPage>
         children: [
           Row(
             children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: AppColors.essentialBrightAccent.withValues(
-                    alpha: 0.15,
-                  ),
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                ),
-                child: Center(
-                  child: Text('👥', style: const TextStyle(fontSize: 20)),
-                ),
-              ),
-              const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -641,7 +587,7 @@ class _CalculatorResultPageState extends State<CalculatorResultPage>
                   borderRadius: BorderRadius.circular(AppRadius.xs),
                 ),
                 child: Text(
-                  '${CalculatorService.formatWeight(perBagWeight)} kg/bag',
+                  '${CalculatorService.formatWeight(perBagWeight)} kg/plastik',
                   style: const TextStyle(
                     fontSize: AppTypography.labelSmall,
                     fontWeight: AppTypography.semiBold,

@@ -28,7 +28,7 @@ class _CalculatorTemplateSelectionPageState
           'Pilih Template Pembagian',
           style: TextStyle(
             color: AppColors.textBase,
-            fontSize: AppTypography.headingMedium,
+            fontSize: AppTypography.headingSmall,
             fontWeight: AppTypography.semiBold,
           ),
         ),
@@ -56,7 +56,7 @@ class _CalculatorTemplateSelectionPageState
 
               // Description
               Text(
-                'Pilih format pembagian daging yang sesuai dengan tradisi atau kebutuhan lingkungan Anda.',
+                'Pilih cara pembagian daging yang sesuai dengan tradisi atau alur kerja di lingkungan Anda.',
                 style: TextStyle(
                   fontSize: AppTypography.bodyMedium,
                   color: AppColors.textSubdued,
@@ -65,101 +65,121 @@ class _CalculatorTemplateSelectionPageState
               const SizedBox(height: AppSpacing.xl),
 
               // Templates
-              ...CalculatorService.templates.map((template) {
-                final isFirst =
-                    template.id == CalculatorService.templates.first.id;
-                return Column(
-                  children: [
-                    SizedBox(
-                      width: double.infinity,
-                      height: 200,
-                      child: GestureDetector(
-                        onTap: () {
-                          context.push('/calculator-input/${template.id}');
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.all(AppSpacing.lg),
-                          decoration: BoxDecoration(
-                            color: AppColors.backgroundElevatedBase,
-                            border: Border.all(
-                              color: isFirst
-                                  ? AppColors.essentialBrightAccent
-                                  : AppColors.decorativeSubdued,
-                              width: isFirst ? 2 : 1,
-                            ),
-                            borderRadius: BorderRadius.circular(AppRadius.md),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Title
-                              Text(
-                                template.name,
-                                style: TextStyle(
-                                  fontSize: AppTypography.headingMedium,
-                                  fontWeight: AppTypography.bold,
-                                  color: AppColors.textBase,
-                                ),
-                              ),
-                              const SizedBox(height: AppSpacing.sm),
+              ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: CalculatorService.templates.length,
+                separatorBuilder: (context, index) =>
+                    const SizedBox(height: AppSpacing.md),
+                itemBuilder: (context, index) {
+                  final template = CalculatorService.templates[index];
 
-                              // Description
-                              Expanded(
-                                child: Text(
-                                  template.description,
-                                  style: TextStyle(
-                                    fontSize: AppTypography.bodySmall,
-                                    color: AppColors.textSubdued,
+                  return Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.backgroundElevatedBase,
+                      border: Border.all(
+                        color: AppColors.decorativeSubdued,
+                        width: 1,
+                      ),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.02),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      onTap: () {
+                        context.push('/calculator-input/${template.id}');
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.all(AppSpacing.lg),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Header: Judul Template
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    template.name,
+                                    style: const TextStyle(
+                                      fontSize: AppTypography.headingMedium,
+                                      fontWeight: AppTypography.bold,
+                                      color: AppColors.textBase,
+                                    ),
                                   ),
-                                  maxLines: 3,
-                                  overflow: TextOverflow.ellipsis,
                                 ),
+                              ],
+                            ),
+                            const SizedBox(height: AppSpacing.sm),
+
+                            // Deskripsi
+                            Text(
+                              template.description,
+                              style: TextStyle(
+                                fontSize: AppTypography.bodySmall,
+                                color: AppColors.textSubdued,
+                                height: 1.4,
+                              ),
+                            ),
+
+                            // Render list formula jika tidak kosong
+                            if (template.formulas.isNotEmpty) ...[
+                              const SizedBox(height: AppSpacing.md),
+                              const Divider(
+                                height: 1,
+                                color: AppColors.decorativeSubdued,
                               ),
                               const SizedBox(height: AppSpacing.md),
-
-                              // Categories tag
-                              if (template.categories.isNotEmpty)
-                                Wrap(
-                                  spacing: AppSpacing.sm,
-                                  children: template.categories
-                                      .map(
-                                        (category) => Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: AppSpacing.sm,
-                                            vertical: AppSpacing.xs,
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: template.formulas.map((formula) {
+                                  return Padding(
+                                    padding: const EdgeInsets.only(
+                                      bottom: AppSpacing.xs,
+                                    ),
+                                    child: Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        // Simbol Bullet
+                                        Text(
+                                          '• ',
+                                          style: TextStyle(
+                                            fontSize: AppTypography.bodySmall,
+                                            color: AppColors.textSubdued,
+                                            fontWeight: FontWeight.bold,
                                           ),
-                                          decoration: BoxDecoration(
-                                            color: AppColors
-                                                .essentialBrightAccent
-                                                .withValues(alpha: 0.15),
-                                            borderRadius: BorderRadius.circular(
-                                              AppRadius.xs,
-                                            ),
-                                          ),
+                                        ),
+                                        // Teks Formula
+                                        Expanded(
                                           child: Text(
-                                            category,
-                                            style: const TextStyle(
-                                              fontSize:
-                                                  AppTypography.labelSmall,
-                                              fontWeight: AppTypography.medium,
-                                              color: AppColors
-                                                  .essentialBrightAccent,
+                                            formula,
+                                            style: TextStyle(
+                                              fontSize: AppTypography.bodySmall,
+                                              color: AppColors.textSubdued,
+                                              height: 1.4,
                                             ),
                                           ),
                                         ),
-                                      )
-                                      .toList(),
-                                ),
+                                      ],
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
                             ],
-                          ),
+                          ],
                         ),
                       ),
                     ),
-                    if (template.id != CalculatorService.templates.last.id)
-                      const SizedBox(height: AppSpacing.md),
-                  ],
-                );
-              }),
+                  );
+                },
+              ),
             ],
           ),
         ),

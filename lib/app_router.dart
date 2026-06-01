@@ -12,14 +12,12 @@ import 'package:qurban_kit/features/mosque_dashboard/presentation/screens/calcul
 import 'package:qurban_kit/features/mosque_dashboard/presentation/screens/calculator/calculator_result_page.dart';
 import 'package:qurban_kit/features/mosque_dashboard/presentation/screens/calculator/calculator_template_selection_page.dart';
 import 'package:qurban_kit/features/mosque_dashboard/presentation/mosque_dashboard/screens/dashboard/admin_home_page.dart';
-import 'package:qurban_kit/features/mosque_dashboard/presentation/screens/mosque_account_suspended_page.dart';
+import 'package:qurban_kit/features/common/mosque_account_suspended_page.dart';
 import 'package:qurban_kit/features/mosque_dashboard/presentation/screens/mosque_admin_dashboard.dart';
-import 'package:qurban_kit/features/mosque_dashboard/presentation/screens/mosque_registration_rejected_page.dart';
-import 'package:qurban_kit/features/mosque_dashboard/presentation/screens/mosque_waiting_dashboard.dart';
+import 'package:qurban_kit/features/common/mosque_registration_rejected_page.dart';
+import 'package:qurban_kit/features/common/mosque_waiting_dashboard.dart';
 import 'package:qurban_kit/features/mosque_dashboard/presentation/screens/periods/periods_page.dart';
 import 'package:qurban_kit/features/mosque_dashboard/presentation/screens/profile/mosque_profile_page.dart';
-import 'package:qurban_kit/features/mosque_dashboard/presentation/screens/recipients/recipient_form_page.dart';
-import 'package:qurban_kit/features/mosque_dashboard/presentation/screens/recipients/recipients_page.dart';
 import 'package:qurban_kit/features/mosque_dashboard/presentation/screens/settings/mosque_settings_page.dart';
 import 'package:qurban_kit/features/mosque_registration/presentation/mosque_registration/screens/mosque_registration_page.dart';
 import 'package:qurban_kit/features/onboarding/presentation/screens/onboarding.dart';
@@ -90,14 +88,6 @@ class AppRouter {
       GoRoute(
         path: '/periods',
         builder: (context, state) => const PeriodsPage(),
-      ),
-      GoRoute(
-        path: '/recipients',
-        builder: (context, state) => const RecipientsPage(),
-      ),
-      GoRoute(
-        path: '/mosque-recipient-form',
-        builder: (context, state) => const RecipientFormPage(),
       ),
       GoRoute(
         path: '/mosque-settings',

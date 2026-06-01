@@ -361,12 +361,6 @@ class _PeriodsPageState extends State<PeriodsPage> {
             color: AppColors.textBase,
           ),
         ),
-        actions: [
-          IconButton(
-            onPressed: () => _refreshPeriods(showMessage: true),
-            icon: const Icon(Icons.refresh_rounded),
-          ),
-        ],
       ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: AppColors.essentialBrightAccent,
@@ -517,7 +511,7 @@ class _PeriodsPageState extends State<PeriodsPage> {
           borderRadius: BorderRadius.circular(AppRadius.md),
         ),
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Container(
               width: 40,
@@ -558,8 +552,8 @@ class _PeriodsPageState extends State<PeriodsPage> {
                           ),
                         ),
                       ),
-                      const SizedBox(width: AppSpacing.sm),
-                      _buildStatusChip(period.isActive),
+                      //   const SizedBox(width: AppSpacing.sm),
+                      //   _buildStatusChip(period.isActive),
                     ],
                   ),
                   const SizedBox(height: AppSpacing.xs),
@@ -572,16 +566,6 @@ class _PeriodsPageState extends State<PeriodsPage> {
                       color: AppColors.textSubdued,
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.sm),
-                  Text(
-                    'Ketuk untuk detail, edit, hapus, atau aktifkan.',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: AppTypography.labelSmall,
-                      color: AppColors.textSubdued,
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -591,30 +575,30 @@ class _PeriodsPageState extends State<PeriodsPage> {
     );
   }
 
-  Widget _buildStatusChip(bool isActive) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.sm,
-        vertical: 6,
-      ),
-      decoration: BoxDecoration(
-        color: isActive
-            ? AppColors.essentialBrightAccent.withOpacity(0.12)
-            : AppColors.decorativeSubdued.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(AppRadius.full),
-      ),
-      child: Text(
-        isActive ? 'Aktif' : 'Nonaktif',
-        style: TextStyle(
-          color: isActive
-              ? AppColors.essentialBrightAccent
-              : AppColors.textSubdued,
-          fontSize: AppTypography.labelSmall,
-          fontWeight: AppTypography.semiBold,
-        ),
-      ),
-    );
-  }
+  // Widget _buildStatusChip(bool isActive) {
+  //   return Container(
+  //     padding: const EdgeInsets.symmetric(
+  //       horizontal: AppSpacing.sm,
+  //       vertical: 6,
+  //     ),
+  //     decoration: BoxDecoration(
+  //       color: isActive
+  //           ? AppColors.essentialBrightAccent.withOpacity(0.12)
+  //           : AppColors.decorativeSubdued.withOpacity(0.15),
+  //       borderRadius: BorderRadius.circular(AppRadius.full),
+  //     ),
+  //     child: Text(
+  //       isActive ? 'Aktif' : 'Nonaktif',
+  //       style: TextStyle(
+  //         color: isActive
+  //             ? AppColors.essentialBrightAccent
+  //             : AppColors.textSubdued,
+  //         fontSize: AppTypography.labelSmall,
+  //         fontWeight: AppTypography.semiBold,
+  //       ),
+  //     ),
+  //   );
+  // }
 
   Widget _buildEmptyState() {
     return Container(

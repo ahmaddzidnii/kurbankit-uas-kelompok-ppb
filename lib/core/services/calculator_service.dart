@@ -1,28 +1,34 @@
 // Service untuk logika kalkulator pembagian daging qurban
-
 import 'package:qurban_kit/features/qurban_distribution/data/models/calculator_models.dart';
 
 class CalculatorService {
-  // Template definitions
+  // 1. Template definitions yang singkron dengan UI
   static final List<CalculatorTemplate> templates = [
     CalculatorTemplate(
       id: 'template_b',
-      name: 'Sederhana',
-      description: 'Sederhana (1/3 Shohibul, 2/3 Masyarakat)',
-      icon: '👥',
-      categories: ['Shohibul', 'Masyarakat'],
+      name: 'Proporsional Sederhana',
+      description:
+          'Metode pembagian ideal berdasarkan syariat untuk mengalokasikan konsumsi shohibul qurban dan distribusi warga.',
+      formulas: [
+        'Alokasi Shohibul Qurban: Maksimal 1/3 (33.3%) dari total daging murni.',
+        'Alokasi Masyarakat & Mustahiq: Sisa 2/3 (66.7%) didistribusikan merata.',
+        'Sistem otomatis memisahkan rasio pembagian dalam sekali input.',
+      ],
     ),
     CalculatorTemplate(
       id: 'template_c',
-      name: 'Kustom',
+      name: 'Kustom Mandiri',
       description:
-          'Kustom sesuai musyawarah, total 100%, tanpa melebihi total qurban',
-      icon: '⚙️',
-      categories: [],
+          'Fleksibilitas penuh untuk menentukan persentase atau bobot distribusi mandiri hasil dari keputusan musyawarah panitia.',
+      formulas: [
+        'Bebas menentukan jumlah kategori penerima daging.',
+        'Persentase alokasi total wajib berakumulasi pas 100%.',
+        'Validasi otomatis agar output tidak melebihi total stok daging.',
+      ],
     ),
   ];
 
-  // Get template by ID
+  // 2. Get template by ID
   static CalculatorTemplate? getTemplate(String templateId) {
     try {
       return templates.firstWhere((t) => t.id == templateId);
@@ -31,20 +37,18 @@ class CalculatorService {
     }
   }
 
-  // Get default recipient categories for template
+  // 3. Get default recipient categories for template
   static List<RecipientCategory> getDefaultCategories(String templateId) {
     switch (templateId) {
       case 'template_b':
         return [
           RecipientCategory(
             name: 'Shohibul',
-            icon: '🙎',
             description: 'Penerima dari pihak berkurban',
             count: 0,
           ),
           RecipientCategory(
             name: 'Masyarakat',
-            icon: '👥',
             description: 'Penerima dari warga sekitar',
             count: 0,
           ),
@@ -56,7 +60,7 @@ class CalculatorService {
     }
   }
 
-  // Calculate distribution based on template
+  // 4. Calculate distribution based on template
   static CalculatorResult calculate({
     required String templateId,
     required List<AnimalData> animals,
@@ -111,8 +115,6 @@ class CalculatorService {
           throw Exception('Total persentase template kustom harus 100%');
         }
 
-        // Alokasi berdasarkan persentase yang disepakati musyawarah,
-        // dengan total tetap 100% agar sesuai kaidah pembagian.
         customPercentages.forEach((category, percentage) {
           if (percentage < 0) {
             throw Exception('Persentase tidak boleh negatif');
@@ -127,7 +129,6 @@ class CalculatorService {
         break;
     }
 
-    // Calculate total bags (assuming 1 bag per recipient)
     int totalBags = recipientCounts.values.fold(0, (sum, count) => sum + count);
 
     return CalculatorResult(
@@ -141,6 +142,7 @@ class CalculatorService {
     );
   }
 
+  // 5. Calculate for Single Animal
   static CalculatorResult calculateForSingleAnimal({
     required String templateId,
     required String animalType,
@@ -156,6 +158,7 @@ class CalculatorService {
     );
   }
 
+  // 6. Calculate Comparison
   static CalculatorComparisonResult calculateComparison({
     required String templateId,
     required double sapiWeight,
@@ -191,12 +194,12 @@ class CalculatorService {
     );
   }
 
-  // Format weight untuk display
+  // 7. Format weight untuk display
   static String formatWeight(double weight) {
     return weight.toStringAsFixed(2);
   }
 
-  // Validate input
+  // 8. Validate input
   static String? validateRecipientCount(int? count) {
     if (count == null || count < 0) {
       return 'Jumlah harus lebih dari 0';

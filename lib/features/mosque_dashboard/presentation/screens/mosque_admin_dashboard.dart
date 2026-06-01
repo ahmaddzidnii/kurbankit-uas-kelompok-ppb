@@ -6,7 +6,6 @@ import 'package:qurban_kit/core/services/user_role_service.dart';
 import 'package:qurban_kit/features/auth/data/models/auth_models.dart';
 import 'package:qurban_kit/features/mosque_dashboard/presentation/mosque_dashboard/screens/dashboard/admin_home_page.dart';
 import 'package:qurban_kit/features/mosque_dashboard/presentation/screens/periods/periods_page.dart';
-import 'package:qurban_kit/features/mosque_dashboard/presentation/screens/recipients/recipients_page.dart';
 import 'package:qurban_kit/features/mosque_dashboard/presentation/screens/profile/mosque_profile_page.dart';
 
 class MosqueAdminDashboard extends StatefulWidget {
@@ -81,7 +80,6 @@ class _MosqueAdminDashboardState extends State<MosqueAdminDashboard> {
     final pages = [
       AdminHomePage(user: _user),
       const PeriodsPage(),
-      const RecipientsPage(),
       MosqueProfilePage(user: _user),
     ];
 
@@ -117,10 +115,6 @@ class _MosqueAdminDashboardState extends State<MosqueAdminDashboard> {
           BottomNavigationBarItem(
             icon: Icon(Icons.calendar_month_rounded),
             label: 'Periode',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.people_rounded),
-            label: 'Data',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person_rounded),

@@ -50,16 +50,12 @@ class _AdminHomePageState extends State<AdminHomePage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Active period card
+                // 1. Card Periode Aktif
                 _buildActivePeriodCard(),
                 const SizedBox(height: AppSpacing.xl),
 
-                // Statistics cards
-                _buildStatisticsSection(),
-                const SizedBox(height: AppSpacing.xl),
-
-                // Quick actions
-                _buildQuickActionsSection(),
+                // 2. Main Hero Card Kalkulator (Ukuran Besar & Penuh)
+                _buildHeroCalculatorCard(),
                 const SizedBox(height: AppSpacing.xl),
               ],
             ),
@@ -94,7 +90,6 @@ class _AdminHomePageState extends State<AdminHomePage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header with period label
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -117,14 +112,16 @@ class _AdminHomePageState extends State<AdminHomePage> {
                   ),
                 ),
               ),
-              Icon(Icons.calendar_today_rounded, color: Colors.white, size: 20),
+              const Icon(
+                Icons.calendar_today_rounded,
+                color: Colors.white,
+                size: 20,
+              ),
             ],
           ),
           const SizedBox(height: AppSpacing.lg),
-
-          // Period name / loading state
           if (_isLoadingPeriod) ...[
-            Row(
+            const Row(
               children: [
                 SizedBox(
                   width: 18,
@@ -134,7 +131,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
                     color: Colors.white,
                   ),
                 ),
-                const SizedBox(width: AppSpacing.md),
+                SizedBox(width: AppSpacing.md),
                 Text(
                   'Memuat periode...',
                   style: TextStyle(
@@ -146,7 +143,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
               ],
             ),
           ] else if (_activePeriod == null) ...[
-            Text(
+            const Text(
               'Belum ada periode aktif',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -157,7 +154,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
               ),
             ),
             const SizedBox(height: AppSpacing.md),
-            Text(
+            const Text(
               'Aktifkan periode di menu Periode',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -172,7 +169,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
               _activePeriod!.displayTitle,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: AppTypography.displaySmall,
                 fontWeight: AppTypography.bold,
                 color: Colors.white,
@@ -185,7 +182,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
                   _activePeriod!.displaySubtitle,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: AppTypography.bodyMedium,
                     fontWeight: AppTypography.medium,
                     color: Colors.white,
@@ -199,75 +196,90 @@ class _AdminHomePageState extends State<AdminHomePage> {
     );
   }
 
-  Widget _buildStatisticsSection() {
-    return _buildCompactStatisticCard(
-      icon: Icons.people_rounded,
-      title: 'Total Mustahiq',
-      value: '0',
-      subtitle: 'Seluruh mustahiq terdaftar',
-      backgroundColor: AppColors.essentialBrightAccent.withOpacity(0.1),
-      iconColor: AppColors.essentialBrightAccent,
-    );
-  }
-
-  Widget _buildCompactStatisticCard({
-    required IconData icon,
-    required String title,
-    required String value,
-    required String subtitle,
-    required Color backgroundColor,
-    required Color iconColor,
-  }) {
+  // HERO CARD: Unit utama kalkulator yang dibuat sangat dominan
+  Widget _buildHeroCalculatorCard() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(AppSpacing.lg),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.xl,
+        vertical: 32,
+      ),
       decoration: BoxDecoration(
         color: AppColors.backgroundElevatedBase,
-        border: Border.all(color: AppColors.decorativeSubdued, width: 1),
-        borderRadius: BorderRadius.circular(AppRadius.md),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: AppColors.decorativeSubdued, width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
-      child: Row(
+      child: Column(
         children: [
           Container(
-            width: 44,
-            height: 44,
+            padding: const EdgeInsets.all(AppSpacing.lg),
             decoration: BoxDecoration(
-              color: backgroundColor,
-              borderRadius: BorderRadius.circular(AppRadius.sm),
+              color: AppColors.essentialBrightAccent.withOpacity(0.12),
+              shape: BoxShape.circle,
             ),
-            child: Icon(icon, color: iconColor, size: 22),
-          ),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: AppTypography.bodyMedium,
-                    fontWeight: AppTypography.semiBold,
-                    color: AppColors.textBase,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                    fontSize: AppTypography.bodySmall,
-                    color: AppColors.textSubdued,
-                  ),
-                ),
-              ],
+            child: const Icon(
+              Icons.calculate_rounded,
+              color: AppColors.essentialBrightAccent,
+              size: 48,
             ),
           ),
-          const SizedBox(width: AppSpacing.md),
-          Text(
-            value,
-            style: const TextStyle(
+          const SizedBox(height: AppSpacing.lg),
+          const Text(
+            'Kalkulator Distribusi Qurban',
+            textAlign: TextAlign.center,
+            style: TextStyle(
               fontSize: AppTypography.headingLarge,
               fontWeight: AppTypography.bold,
               color: AppColors.textBase,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Text(
+            'Solusi cerdas untuk menghitung dan membagi proporsi bobot daging secara otomatis, adil, dan presisi dalam hitungan detik.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: AppTypography.bodyMedium,
+              color: AppColors.textSubdued,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 28),
+          SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: ElevatedButton(
+              onPressed: () {
+                context.push('/calculator-template-selection');
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.essentialBrightAccent,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                ),
+                elevation: 0,
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Buka Kalkulator',
+                    style: TextStyle(
+                      fontWeight: AppTypography.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                  SizedBox(width: AppSpacing.sm),
+                  Icon(Icons.arrow_forward_rounded, size: 18),
+                ],
+              ),
             ),
           ),
         ],
@@ -275,108 +287,78 @@ class _AdminHomePageState extends State<AdminHomePage> {
     );
   }
 
-  Widget _buildQuickActionsSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Quick Actions',
-          style: TextStyle(
-            fontSize: AppTypography.headingMedium,
-            fontWeight: AppTypography.semiBold,
-            color: AppColors.textBase,
-          ),
-        ),
-        const SizedBox(height: AppSpacing.md),
-        Column(
-          children: [
-            _buildActionButton(
-              icon: Icons.person_add_rounded,
-              label: 'Tambah Mustahiq',
-              description: 'Masukkan mustahiq baru ke data distribusi',
-              onTap: () {
-                context.push('/mosque-recipient-form');
-              },
-            ),
-            const SizedBox(height: AppSpacing.md),
-            _buildActionButton(
-              icon: Icons.calculate_rounded,
-              label: 'Kalkulator Qurban',
-              description:
-                  'Hitung pembagian berat berdasarkan jumlah daging dan mustahiq',
-              onTap: () {
-                context.push('/calculator-template-selection');
-              },
-            ),
-          ],
-        ),
-      ],
-    );
-  }
+  // HIGHLIGHT KEUNGGULAN: Pengisi layout bawah biar seimbang dan penuh
+  // Widget _buildCalculatorFeaturesSection() {
+  //   return Column(
+  //     crossAxisAlignment: CrossAxisAlignment.start,
+  //     children: [
+  //       const Text(
+  //         'Keunggulan Sistem',
+  //         style: TextStyle(
+  //           fontSize: AppTypography.headingMedium,
+  //           fontWeight: AppTypography.semiBold,
+  //           color: AppColors.textBase,
+  //         ),
+  //       ),
+  //       const SizedBox(height: AppSpacing.md),
+  //       Row(
+  //         children: [
+  //           Expanded(
+  //             child: _buildFeatureGridItem(
+  //               icon: Icons.shutter_speed_rounded,
+  //               title: 'Hitung Instan',
+  //               desc: 'Tanpa rumus manual.',
+  //             ),
+  //           ),
+  //           const SizedBox(width: AppSpacing.md),
+  //           Expanded(
+  //             child: _buildFeatureGridItem(
+  //               icon: Icons.shutter_speed_rounded, // Pakai Icons.scale_rounded jika error
+  //               title: 'Alokasi Adil',
+  //               desc: 'Rasio pembagian pas.',
+  //             ),
+  //           ),
+  //         ],
+  //       ),
+  //     ],
+  //   );
+  // }
 
-  Widget _buildActionButton({
-    required IconData icon,
-    required String label,
-    required String description,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        decoration: BoxDecoration(
-          color: AppColors.backgroundElevatedBase,
-          border: Border.all(color: AppColors.decorativeSubdued, width: 1),
-          borderRadius: BorderRadius.circular(AppRadius.md),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: AppColors.essentialBrightAccent.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-              ),
-              child: Icon(
-                icon,
-                color: AppColors.essentialBrightAccent,
-                size: 22,
-              ),
-            ),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    label,
-                    style: const TextStyle(
-                      fontSize: AppTypography.bodyMedium,
-                      fontWeight: AppTypography.semiBold,
-                      color: AppColors.textBase,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.xs),
-                  Text(
-                    description,
-                    style: TextStyle(
-                      fontSize: AppTypography.bodySmall,
-                      color: AppColors.textSubdued,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: AppSpacing.sm),
-            Icon(
-              Icons.chevron_right_rounded,
-              color: AppColors.textSubdued.withOpacity(0.75),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  // Widget _buildFeatureGridItem({
+  //   required IconData icon,
+  //   required String title,
+  //   required String desc,
+  // }) {
+  //   return Container(
+  //     padding: const EdgeInsets.all(AppSpacing.md),
+  //     decoration: BoxDecoration(
+  //       color: AppColors.backgroundElevatedBase,
+  //       border: Border.all(color: AppColors.decorativeSubdued, width: 1),
+  //       borderRadius: BorderRadius.circular(AppRadius.md),
+  //     ),
+  //     child: Column(
+  //       crossAxisAlignment: CrossAxisAlignment.start,
+  //       children: [
+  //         Icon(icon, color: AppColors.essentialBrightAccent, size: 24),
+  //         const SizedBox(height: AppSpacing.sm),
+  //         Text(
+  //           title,
+  //           style: const TextStyle(
+  //             fontSize: AppTypography.bodyMedium,
+  //             fontWeight: AppTypography.semiBold,
+  //             color: AppColors.textBase,
+  //           ),
+  //         ),
+  //         const SizedBox(height: AppSpacing.xs),
+  //         Text(
+  //           desc,
+  //           style: TextStyle(
+  //             fontSize: AppTypography.bodySmall,
+  //             color: AppColors.textSubdued,
+  //           ),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 }

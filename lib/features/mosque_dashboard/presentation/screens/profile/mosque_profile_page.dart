@@ -43,7 +43,7 @@ class MosqueProfilePage extends StatelessWidget {
     final displayName = user?.name ?? 'Nama belum tersedia';
     final displayEmail = user?.email ?? 'Email belum tersedia';
     final mosqueName = user?.masjid?.nama ?? 'Data masjid belum tersedia';
-    final role = user?.role == 'ADMIN_MASJID' ? 'Mosque Admin' : 'User';
+    final role = user?.role == 'ADMIN_MASJID' ? 'Admin Masjid' : 'User';
 
     return Scaffold(
       backgroundColor: AppColors.backgroundBase,

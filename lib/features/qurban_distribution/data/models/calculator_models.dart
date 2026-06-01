@@ -4,15 +4,12 @@ class CalculatorTemplate {
   final String id;
   final String name;
   final String description;
-  final String icon;
-  final List<String> categories;
-
+  final List<String> formulas;
   CalculatorTemplate({
     required this.id,
     required this.name,
     required this.description,
-    required this.icon,
-    required this.categories,
+    required this.formulas,
   });
 }
 
@@ -26,14 +23,12 @@ class AnimalData {
 
 class RecipientCategory {
   final String name;
-  final String icon;
   final String description;
-  int? count; // jumlah penerima
-  double? percentage; // persentase untuk template custom
+  int? count;
+  double? percentage;
 
   RecipientCategory({
     required this.name,
-    required this.icon,
     required this.description,
     this.count,
     this.percentage,

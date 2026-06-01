@@ -117,7 +117,6 @@ class _CalculatorInputPageState extends State<CalculatorInputPage>
                     ...categories,
                     RecipientCategory(
                       name: categoryName,
-                      icon: '👥',
                       description: '',
                       count: 0,
                     ),
@@ -290,6 +289,8 @@ class _CalculatorInputPageState extends State<CalculatorInputPage>
             labelColor: AppColors.essentialBrightAccent,
             unselectedLabelColor: AppColors.textSubdued,
             indicatorColor: AppColors.essentialBrightAccent,
+            dividerColor: Colors.transparent,
+            indicatorSize: TabBarIndicatorSize.tab,
             tabs: const [
               Tab(text: 'Sapi'),
               Tab(text: 'Kambing'),
@@ -327,12 +328,9 @@ class _CalculatorInputPageState extends State<CalculatorInputPage>
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.essentialBrightAccent,
                 ),
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 4.0),
-                  child: Text(
-                    'Lihat Hasil',
-                    style: TextStyle(fontSize: 16, color: Colors.white),
-                  ),
+                child: Text(
+                  'Hitung dan Lihat Hasil',
+                  style: TextStyle(fontSize: 16, color: Colors.white),
                 ),
               ),
             ),
@@ -602,23 +600,6 @@ class _CalculatorInputPageState extends State<CalculatorInputPage>
         children: [
           Row(
             children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: AppColors.essentialBrightAccent.withValues(
-                    alpha: 0.15,
-                  ),
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                ),
-                child: Center(
-                  child: Text(
-                    category.icon,
-                    style: const TextStyle(fontSize: 20),
-                  ),
-                ),
-              ),
-              const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -794,7 +775,7 @@ class _CalculatorInputPageState extends State<CalculatorInputPage>
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'STEP $currentProgress OF 4',
+              'Langkah $currentProgress dari 4',
               style: TextStyle(
                 fontSize: AppTypography.bodySmall,
                 color: AppColors.textSubdued,
