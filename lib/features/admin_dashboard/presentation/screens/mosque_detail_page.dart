@@ -2,11 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:qurban_kit/core/configs/theme/theme.dart';
 import 'package:qurban_kit/core/services/service_locator.dart';
-import 'package:qurban_kit/core/services/user_role_service.dart';
 import 'package:qurban_kit/core/utils/date_time_formatter.dart';
 import 'package:qurban_kit/features/admin_dashboard/data/models/admin_mosque_record.dart';
 import 'package:qurban_kit/features/admin_dashboard/data/models/admin_mosque_status.dart';
-import 'package:qurban_kit/features/auth/data/services/auth_repository.dart';
 import 'package:qurban_kit/features/admin_dashboard/data/services/admin_mosque_data_source.dart';
 import 'package:qurban_kit/features/admin_dashboard/presentation/screens/verification_detail_components.dart';
 
@@ -55,36 +53,6 @@ class _MosqueDetailPageState extends State<MosqueDetailPage> {
         });
       }
     }
-  }
-
-  void _handleLogout() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Apakah Anda yakin ingin logout?'),
-        actions: [
-          TextButton(
-            onPressed: () => context.pop(),
-            child: const Text('Batal'),
-          ),
-          TextButton(
-            onPressed: () async {
-              final authRepository = getIt<AuthRepository>();
-              await authRepository.logout();
-              await UserRoleService.clearUserRoleData();
-
-              if (!context.mounted) {
-                return;
-              }
-
-              context.go('/auth');
-            },
-            child: const Text('Logout', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
   }
 
   Future<void> _blockMosque() async {
@@ -352,9 +320,6 @@ class _MosqueDetailPageState extends State<MosqueDetailPage> {
         title: const Text('Detail Masjid'),
         elevation: _isScrolledToTop ? 4 : 0,
         scrolledUnderElevation: 0,
-        actions: [
-          IconButton(icon: const Icon(Icons.logout), onPressed: _handleLogout),
-        ],
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
