@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:qurban_kit/core/configs/exceptions.dart';
 import 'package:qurban_kit/core/configs/theme/theme.dart';
 import 'package:qurban_kit/core/services/cache_service.dart';
 import 'package:qurban_kit/core/services/service_locator.dart';
 import 'package:qurban_kit/features/mosque_dashboard/data/models/period_model.dart';
-import 'period_calculations_page.dart';
 
 class PeriodsPage extends StatefulWidget {
   const PeriodsPage({super.key});
@@ -67,7 +67,12 @@ class _PeriodsPageState extends State<PeriodsPage> {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      showDragHandle: true,
+      backgroundColor: AppColors.backgroundElevatedBase,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
+      ),
+      constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width),
       builder: (sheetContext) => _PeriodDetailLoader(
         periodId: periodId,
         onEdit: (period) async {
@@ -102,9 +107,7 @@ class _PeriodsPageState extends State<PeriodsPage> {
         await periodDataSource.updatePeriod(period.id, isActive: false);
       }
     } catch (e) {
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -117,42 +120,191 @@ class _PeriodsPageState extends State<PeriodsPage> {
   }
 
   Future<bool> _confirmDelete(PeriodModel period) async {
+    bool isDeleting = false;
+
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Hapus Periode'),
-        content: Text(
-          'Hapus ${period.displayTitle}? Tindakan ini tidak bisa dibatalkan.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Batal'),
-          ),
-          TextButton(
-            onPressed: () async {
-              try {
-                await periodDataSource.deletePeriod(period.id);
-                if (mounted) {
-                  Navigator.of(dialogContext).pop(true);
-                }
-              } catch (e) {
-                if (mounted) {
-                  Navigator.of(dialogContext).pop(false);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        _resolveErrorMessage(e, 'Gagal menghapus periode'),
+      barrierDismissible:
+          false, // Kunci layar agar user tidak menutup dialog secara tidak sengaja saat proses hapus berjalan
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (dialogContext, setDialogState) {
+            return AlertDialog(
+              backgroundColor: AppColors.backgroundElevatedBase,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+              ),
+              // Atur padding content dan tombol aksi agar presisi
+              contentPadding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                AppSpacing.xl,
+                AppSpacing.lg,
+                AppSpacing.md,
+              ),
+              actionsPadding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                0,
+                AppSpacing.lg,
+                AppSpacing.lg,
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // ICON PERINGATAN (Destructive Visual Indicator)
+                  Container(
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.delete_forever_rounded,
+                      color: Colors.red,
+                      size: 36,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+
+                  // JUDUL DIALOG
+                  const Text(
+                    'Hapus Periode',
+                    style: TextStyle(
+                      fontSize: AppTypography.headingSmall,
+                      fontWeight: AppTypography.bold,
+                      color: AppColors.textBase,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+
+                  // DESKRIPSI WARNING
+                  RichText(
+                    textAlign: TextAlign.center,
+                    text: TextSpan(
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: AppColors.textSubdued,
+                        height: 1.4,
+                      ),
+                      children: [
+                        const TextSpan(
+                          text: 'Apakah Anda yakin ingin menghapus ',
+                        ),
+                        TextSpan(
+                          text: period.displayTitle,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textBase,
+                          ),
+                        ),
+                        const TextSpan(
+                          text:
+                              '? Semua data perhitungan di dalam periode ini akan ikut terhapus secara permanen.',
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                Row(
+                  children: [
+                    // --- TOMBOL BATAL ---
+                    Expanded(
+                      child: SizedBox(
+                        height: 44,
+                        child: OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.textBase,
+                            disabledForegroundColor: AppColors.textSubdued,
+                            side: BorderSide(
+                              color: AppColors.decorativeSubdued,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(AppRadius.md),
+                            ),
+                          ),
+                          onPressed: isDeleting
+                              ? null
+                              : () => Navigator.of(dialogContext).pop(false),
+                          child: const Text('Batal'),
+                        ),
                       ),
                     ),
-                  );
-                }
-              }
-            },
-            child: const Text('Hapus', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
+                    const SizedBox(width: AppSpacing.md),
+
+                    // --- TOMBOL KONFIRMASI HAPUS ---
+                    Expanded(
+                      child: SizedBox(
+                        height: 44,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red,
+                            foregroundColor: Colors.white,
+                            disabledBackgroundColor:
+                                AppColors.decorativeSubdued,
+                            disabledForegroundColor: AppColors.textSubdued,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(AppRadius.md),
+                            ),
+                            elevation: 0,
+                          ),
+                          onPressed: isDeleting
+                              ? null
+                              : () async {
+                                  setDialogState(() => isDeleting = true);
+                                  try {
+                                    await periodDataSource.deletePeriod(
+                                      period.id,
+                                    );
+                                    if (dialogContext.mounted) {
+                                      Navigator.of(dialogContext).pop(true);
+                                    }
+                                  } catch (e) {
+                                    if (dialogContext.mounted) {
+                                      // Kembalikan state ke normal jika gagal, lalu tutup dialog dengan return false
+                                      setDialogState(() => isDeleting = false);
+                                      Navigator.of(dialogContext).pop(false);
+
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            _resolveErrorMessage(
+                                              e,
+                                              'Gagal menghapus periode',
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                  }
+                                },
+                          child: isDeleting
+                              ? const SizedBox(
+                                  height: 18,
+                                  width: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white,
+                                    ),
+                                  ),
+                                )
+                              : const Text(
+                                  'Hapus',
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
 
     return confirmed ?? false;
@@ -172,9 +324,15 @@ class _PeriodsPageState extends State<PeriodsPage> {
     bool isActive = period?.isActive ?? false;
     bool isSubmitting = false;
 
-    final result = await showDialog<bool>(
+    final result = await showModalBottomSheet<bool>(
       context: context,
-      barrierDismissible: false,
+      isScrollControlled: true, // Agar sheet bergeser naik secara fleksibel
+      showDragHandle: true,
+      backgroundColor: AppColors.backgroundElevatedBase,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
+      ),
+      constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width),
       builder: (dialogContext) {
         return StatefulBuilder(
           builder: (dialogContext, setDialogState) {
@@ -208,10 +366,7 @@ class _PeriodsPageState extends State<PeriodsPage> {
                   );
                 }
 
-                if (!dialogContext.mounted) {
-                  return;
-                }
-
+                if (!dialogContext.mounted) return;
                 Navigator.of(dialogContext).pop(true);
               } catch (e) {
                 if (dialogContext.mounted) {
@@ -229,99 +384,222 @@ class _PeriodsPageState extends State<PeriodsPage> {
               }
             }
 
-            return AlertDialog(
-              title: Text(period == null ? 'Tambah Periode' : 'Edit Periode'),
-              content: SingleChildScrollView(
-                child: Form(
-                  key: formKey,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      TextFormField(
-                        controller: nameController,
-                        decoration: const InputDecoration(
-                          labelText: 'Nama Periode',
+            return SafeArea(
+              top: false,
+              child: Padding(
+                padding: EdgeInsets.only(
+                  left: AppSpacing.lg,
+                  right: AppSpacing.lg,
+                  top: AppSpacing.xs,
+                  // PERBAIKAN: Menggunakan dialogContext untuk menghitung ruang keyboard hp secara real-time
+                  bottom:
+                      AppSpacing.lg +
+                      MediaQuery.of(dialogContext).viewInsets.bottom,
+                ),
+                child: SingleChildScrollView(
+                  child: Form(
+                    key: formKey,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          period == null
+                              ? 'Tambah Periode Baru'
+                              : 'Edit Data Periode',
+                          style: const TextStyle(
+                            fontSize: AppTypography.headingMedium,
+                            fontWeight: AppTypography.bold,
+                            color: AppColors.textBase,
+                          ),
                         ),
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'Nama periode wajib diisi';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-                      TextFormField(
-                        controller: hijriahController,
-                        decoration: const InputDecoration(
-                          labelText: 'Tahun Hijriah',
+                        const SizedBox(height: AppSpacing.lg),
+                        TextFormField(
+                          controller: nameController,
+                          decoration: const InputDecoration(
+                            labelText: 'Nama Periode',
+                            hintText: 'Contoh: Idul Adha 1447 H',
+                            border: OutlineInputBorder(),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'Nama periode wajib diisi';
+                            }
+                            return null;
+                          },
                         ),
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                        ],
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'Tahun Hijriah wajib diisi';
-                          }
-                          if (int.tryParse(value.trim()) == null) {
-                            return 'Masukkan angka yang valid';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-                      TextFormField(
-                        controller: masehiController,
-                        decoration: const InputDecoration(
-                          labelText: 'Tahun Masehi',
-                        ),
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                        ],
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'Tahun Masehi wajib diisi';
-                          }
-                          if (int.tryParse(value.trim()) == null) {
-                            return 'Masukkan angka yang valid';
-                          }
-                          return null;
-                        },
-                      ),
-                      if (period != null) ...[
                         const SizedBox(height: AppSpacing.md),
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('Aktif'),
-                            Switch(
-                              value: isActive,
-                              onChanged: (value) {
-                                setDialogState(() {
-                                  isActive = value;
-                                });
-                              },
+                            Expanded(
+                              child: TextFormField(
+                                controller: hijriahController,
+                                decoration: const InputDecoration(
+                                  labelText: 'Tahun Hijriah',
+                                  hintText: '1447',
+                                  border: OutlineInputBorder(),
+                                ),
+                                keyboardType: TextInputType.number,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                ],
+                                validator: (value) {
+                                  if (value == null || value.trim().isEmpty) {
+                                    return 'Wajib diisi';
+                                  }
+                                  return null;
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: AppSpacing.md),
+                            Expanded(
+                              child: TextFormField(
+                                controller: masehiController,
+                                decoration: const InputDecoration(
+                                  labelText: 'Tahun Masehi',
+                                  hintText: '2026',
+                                  border: OutlineInputBorder(),
+                                ),
+                                keyboardType: TextInputType.number,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                ],
+                                validator: (value) {
+                                  if (value == null || value.trim().isEmpty) {
+                                    return 'Wajib diisi';
+                                  }
+                                  return null;
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (period != null) ...[
+                          const SizedBox(height: AppSpacing.md),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.sm,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(AppRadius.md),
+                              border: Border.all(
+                                color: AppColors.decorativeSubdued.withOpacity(
+                                  0.4,
+                                ),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text(
+                                  'Set sebagai Periode Aktif',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.normal,
+                                  ),
+                                ),
+                                Switch(
+                                  value: isActive,
+                                  onChanged: (value) {
+                                    setDialogState(() => isActive = value);
+                                  },
+                                  activeColor: Colors.white,
+                                  activeTrackColor:
+                                      AppColors.essentialBrightAccent,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: AppSpacing.xl),
+                        Row(
+                          children: [
+                            // --- Tombol Batal ---
+                            Expanded(
+                              child: SizedBox(
+                                height: 48,
+                                child: OutlinedButton(
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: AppColors
+                                        .textBase, // Pindahkan warna utama ke sini
+                                    disabledForegroundColor: AppColors
+                                        .textSubdued, // Warna teks saat disabled
+                                    side: BorderSide(
+                                      color: isSubmitting
+                                          ? AppColors.decorativeSubdued
+                                                .withOpacity(0.4)
+                                          : AppColors.decorativeSubdued,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(
+                                        AppRadius.md,
+                                      ),
+                                    ),
+                                  ),
+                                  onPressed: isSubmitting
+                                      ? null
+                                      : () => Navigator.of(
+                                          dialogContext,
+                                        ).pop(false),
+                                  child: const Text(
+                                    'Batal',
+                                  ), // TextStyle warna manual dihapus agar transisi disabled mulus
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: AppSpacing.md),
+
+                            // --- Tombol Simpan ---
+                            Expanded(
+                              child: SizedBox(
+                                height: 48,
+                                child: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor:
+                                        AppColors.essentialBrightAccent,
+                                    foregroundColor: Colors.white,
+                                    // Setup warna disabled agar serasi dengan sistem design Anda
+                                    disabledBackgroundColor:
+                                        AppColors.decorativeSubdued,
+                                    disabledForegroundColor:
+                                        AppColors.textSubdued,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(
+                                        AppRadius.md,
+                                      ),
+                                    ),
+                                    elevation: 0,
+                                  ),
+                                  onPressed: isSubmitting ? null : submit,
+                                  child: isSubmitting
+                                      ? const SizedBox(
+                                          height: 20,
+                                          width: 20,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2.5,
+                                            valueColor:
+                                                AlwaysStoppedAnimation<Color>(
+                                                  AppColors.textSubdued,
+                                                ),
+                                          ),
+                                        )
+                                      : const Text(
+                                          'Simpan',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                ),
+                              ),
                             ),
                           ],
                         ),
                       ],
-                    ],
+                    ),
                   ),
                 ),
               ),
-              actions: [
-                TextButton(
-                  onPressed: isSubmitting
-                      ? null
-                      : () => Navigator.of(dialogContext).pop(false),
-                  child: const Text('Batal'),
-                ),
-                ElevatedButton(
-                  onPressed: isSubmitting ? null : submit,
-                  child: Text(isSubmitting ? 'Menyimpan...' : 'Simpan'),
-                ),
-              ],
             );
           },
         );
@@ -358,11 +636,6 @@ class _PeriodsPageState extends State<PeriodsPage> {
     return fallback;
   }
 
-  // Static method untuk invalidate cache dari luar (e.g., dari dashboard)
-  static void invalidateCache() {
-    CacheService().invalidate(_cacheKey);
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -397,10 +670,10 @@ class _PeriodsPageState extends State<PeriodsPage> {
                 return ListView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.all(AppSpacing.lg),
-                  children: [
+                  children: const [
                     SizedBox(
                       height: 160,
-                      child: const Center(child: CircularProgressIndicator()),
+                      child: Center(child: CircularProgressIndicator()),
                     ),
                   ],
                 );
@@ -555,23 +828,15 @@ class _PeriodsPageState extends State<PeriodsPage> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          period.displayTitle,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: AppTypography.headingSmall,
-                            fontWeight: AppTypography.bold,
-                            color: AppColors.textBase,
-                          ),
-                        ),
-                      ),
-                      //   const SizedBox(width: AppSpacing.sm),
-                      //   _buildStatusChip(period.isActive),
-                    ],
+                  Text(
+                    period.displayTitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: AppTypography.headingSmall,
+                      fontWeight: AppTypography.bold,
+                      color: AppColors.textBase,
+                    ),
                   ),
                   const SizedBox(height: AppSpacing.xs),
                   Text(
@@ -591,31 +856,6 @@ class _PeriodsPageState extends State<PeriodsPage> {
       ),
     );
   }
-
-  // Widget _buildStatusChip(bool isActive) {
-  //   return Container(
-  //     padding: const EdgeInsets.symmetric(
-  //       horizontal: AppSpacing.sm,
-  //       vertical: 6,
-  //     ),
-  //     decoration: BoxDecoration(
-  //       color: isActive
-  //           ? AppColors.essentialBrightAccent.withOpacity(0.12)
-  //           : AppColors.decorativeSubdued.withOpacity(0.15),
-  //       borderRadius: BorderRadius.circular(AppRadius.full),
-  //     ),
-  //     child: Text(
-  //       isActive ? 'Aktif' : 'Nonaktif',
-  //       style: TextStyle(
-  //         color: isActive
-  //             ? AppColors.essentialBrightAccent
-  //             : AppColors.textSubdued,
-  //         fontSize: AppTypography.labelSmall,
-  //         fontWeight: AppTypography.semiBold,
-  //       ),
-  //     ),
-  //   );
-  // }
 
   Widget _buildEmptyState() {
     return Container(
@@ -752,74 +992,46 @@ class _PeriodDetailLoaderState extends State<_PeriodDetailLoader> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return Container(
-        decoration: BoxDecoration(
-          color: AppColors.backgroundElevatedBase,
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(AppRadius.lg),
-            topRight: Radius.circular(AppRadius.lg),
+      return SafeArea(
+        top: false,
+        child: Padding(
+          padding: EdgeInsets.only(
+            left: AppSpacing.lg,
+            right: AppSpacing.lg,
+            bottom: AppSpacing.lg + MediaQuery.of(context).viewInsets.bottom,
           ),
-        ),
-        child: SafeArea(
-          top: false,
-          child: Padding(
-            padding: EdgeInsets.only(
-              left: AppSpacing.lg,
-              right: AppSpacing.lg,
-              top: AppSpacing.lg,
-              bottom: AppSpacing.lg + MediaQuery.of(context).viewInsets.bottom,
-            ),
-            child: SizedBox(
-              height: 160,
-              child: Center(child: CircularProgressIndicator()),
-            ),
+          child: const SizedBox(
+            height: 120,
+            child: Center(child: CircularProgressIndicator()),
           ),
         ),
       );
     }
 
     if (_error != null || _period == null) {
-      return Container(
-        decoration: BoxDecoration(
-          color: AppColors.backgroundElevatedBase,
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(AppRadius.lg),
-            topRight: Radius.circular(AppRadius.lg),
+      return SafeArea(
+        top: false,
+        child: Padding(
+          padding: EdgeInsets.only(
+            left: AppSpacing.lg,
+            right: AppSpacing.lg,
+            bottom: AppSpacing.lg + MediaQuery.of(context).viewInsets.bottom,
           ),
-        ),
-        child: SafeArea(
-          top: false,
-          child: Padding(
-            padding: EdgeInsets.only(
-              left: AppSpacing.lg,
-              right: AppSpacing.lg,
-              top: AppSpacing.lg,
-              bottom: AppSpacing.lg + MediaQuery.of(context).viewInsets.bottom,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Gagal memuat detail periode',
-                  style: TextStyle(
-                    fontSize: AppTypography.headingSmall,
-                    fontWeight: AppTypography.bold,
-                    color: AppColors.textBase,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.md),
-                ElevatedButton(
-                  onPressed: _fetch,
-                  child: const Text('Coba lagi'),
-                ),
-              ],
-            ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Gagal memuat detail periode',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              ElevatedButton(onPressed: _fetch, child: const Text('Coba lagi')),
+            ],
           ),
         ),
       );
     }
 
-    // When loaded, return the original detail sheet directly (no extra padding wrapper)
     return _PeriodDetailSheet(
       period: _period!,
       onEdit: () => widget.onEdit(_period!),
@@ -857,9 +1069,7 @@ class _PeriodDetailSheetState extends State<_PeriodDetailSheet> {
   }
 
   Future<void> _handleToggle(bool value) async {
-    if (_isBusy || value == _isActive) {
-      return;
-    }
+    if (_isBusy || value == _isActive) return;
 
     setState(() {
       _isBusy = true;
@@ -867,9 +1077,7 @@ class _PeriodDetailSheetState extends State<_PeriodDetailSheet> {
 
     await widget.onToggleActive(value);
 
-    if (!mounted) {
-      return;
-    }
+    if (!mounted) return;
 
     setState(() {
       _isActive = value;
@@ -879,169 +1087,146 @@ class _PeriodDetailSheetState extends State<_PeriodDetailSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.backgroundElevatedBase,
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(AppRadius.lg),
-          topRight: Radius.circular(AppRadius.lg),
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: EdgeInsets.only(
+          left: AppSpacing.lg,
+          right: AppSpacing.lg,
+          top: AppSpacing.sm,
+          bottom: AppSpacing.lg + MediaQuery.of(context).viewInsets.bottom,
         ),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: EdgeInsets.only(
-            left: AppSpacing.lg,
-            right: AppSpacing.lg,
-            top: AppSpacing.lg,
-            bottom: AppSpacing.lg + MediaQuery.of(context).viewInsets.bottom,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Expanded(
-                    child: Text(
-                      'Detail Periode',
-                      style: TextStyle(
-                        fontSize: AppTypography.headingMedium,
-                        fontWeight: AppTypography.bold,
-                        color: AppColors.textBase,
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: _isBusy
-                        ? null
-                        : () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.close_rounded),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              _buildDetailRow('Nama', widget.period.displayTitle),
-              const SizedBox(height: AppSpacing.md),
-              _buildDetailRow(
-                'Tahun Hijriah',
-                widget.period.tahunHijriah.toString(),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              _buildDetailRow(
-                'Tahun Masehi',
-                widget.period.tahunMasehi.toString(),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              _buildDetailRow(
-                'ID',
-                widget.period.id.isEmpty ? '-' : widget.period.id,
-              ),
-              const SizedBox(height: AppSpacing.md),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Aktif',
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Expanded(
+                  child: Text(
+                    'Detail Periode',
                     style: TextStyle(
-                      fontSize: AppTypography.bodyMedium,
-                      color: AppColors.textSubdued,
-                      fontWeight: AppTypography.medium,
+                      fontSize: AppTypography.headingMedium,
+                      fontWeight: AppTypography.bold,
+                      color: AppColors.textBase,
                     ),
                   ),
-                  Switch(
-                    value: _isActive,
-                    onChanged: _isBusy ? null : _handleToggle,
-                    activeColor: Colors.white,
-                    activeTrackColor: AppColors.essentialBrightAccent,
-                    inactiveThumbColor: Colors.white,
-                    inactiveTrackColor: AppColors.decorativeSubdued,
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.xl),
-
-              // ================= BUTTON UTAMA (Data Perhitungan) =================
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.essentialBrightAccent,
-                    foregroundColor: Colors.white,
-                    // State ketika disabled (loading / busy)
-                    disabledBackgroundColor: AppColors.decorativeSubdued,
-                    disabledForegroundColor: AppColors.textSubdued,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    elevation: _isBusy
-                        ? 0
-                        : 1, // Hilangkan shadow saat disabled
-                  ),
-                  onPressed: _isBusy
-                      ? null
-                      : () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => PeriodCalculationsPage(
-                                periodId: widget.period.id,
-                                periodTitle: widget.period.displayTitle,
-                              ),
-                            ),
-                          );
-                        },
-                  child: const Text('Data Perhitungan'),
                 ),
-              ),
-              const SizedBox(height: AppSpacing.md),
-
-              // ================= BUTTON SEKUNDER (Edit & Hapus) =================
-              Row(
-                children: [
-                  // --- Tombol Edit ---
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      icon: const Icon(Icons.edit_rounded, size: 18),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.textBase,
-                        disabledForegroundColor: AppColors.textSubdued,
-                        // Mengubah warna border jadi lebih samar saat disabled
-                        side: BorderSide(
-                          color: _isBusy
-                              ? AppColors.decorativeSubdued.withOpacity(0.5)
-                              : AppColors.decorativeSubdued,
-                        ),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                      onPressed: _isBusy ? null : widget.onEdit,
-                      label: const Text('Edit'),
-                    ),
+                IconButton(
+                  onPressed: _isBusy ? null : () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.close_rounded),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            _buildDetailRow('Nama', widget.period.displayTitle),
+            const SizedBox(height: AppSpacing.md),
+            _buildDetailRow(
+              'Tahun Hijriah',
+              widget.period.tahunHijriah.toString(),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            _buildDetailRow(
+              'Tahun Masehi',
+              widget.period.tahunMasehi.toString(),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            _buildDetailRow(
+              'ID',
+              widget.period.id.isEmpty ? '-' : widget.period.id,
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Aktif',
+                  style: TextStyle(
+                    fontSize: AppTypography.bodyMedium,
+                    color: AppColors.textSubdued,
+                    fontWeight: AppTypography.medium,
                   ),
-                  const SizedBox(width: AppSpacing.md),
-
-                  // --- Tombol Hapus ---
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      icon: const Icon(Icons.delete_outline_rounded, size: 18),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.red,
-                        disabledForegroundColor: AppColors.textSubdued,
-                        // PENTING: Jika tidak diatur, border akan tetap merah menyala saat disabled
-                        side: BorderSide(
-                          color: _isBusy
-                              ? AppColors.decorativeSubdued.withOpacity(0.5)
-                              : Colors.red,
-                          width: 1,
-                        ),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                      onPressed: _isBusy ? null : widget.onDelete,
-                      label: const Text('Hapus'),
-                    ),
-                  ),
-                ],
+                ),
+                Switch(
+                  value: _isActive,
+                  onChanged: _isBusy ? null : _handleToggle,
+                  activeColor: Colors.white,
+                  activeTrackColor: AppColors.essentialBrightAccent,
+                  inactiveThumbColor: Colors.white,
+                  inactiveTrackColor: AppColors.decorativeSubdued,
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.xl),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.essentialBrightAccent,
+                  foregroundColor: Colors.white,
+                  disabledBackgroundColor: AppColors.decorativeSubdued,
+                  disabledForegroundColor: AppColors.textSubdued,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  elevation: _isBusy ? 0 : 1,
+                ),
+                onPressed: _isBusy
+                    ? null
+                    : () {
+                        Navigator.of(context).pop();
+                        context.push(
+                          '/period-calculations',
+                          extra: {
+                            'periodId': widget.period.id,
+                            'periodTitle': widget.period.displayTitle,
+                          },
+                        );
+                      },
+                child: const Text('Data Perhitungan'),
               ),
-            ],
-          ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    icon: const Icon(Icons.edit_rounded, size: 18),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.textBase,
+                      disabledForegroundColor: AppColors.textSubdued,
+                      side: BorderSide(
+                        color: _isBusy
+                            ? AppColors.decorativeSubdued.withOpacity(0.5)
+                            : AppColors.decorativeSubdued,
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    onPressed: _isBusy ? null : widget.onEdit,
+                    label: const Text('Edit'),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    icon: const Icon(Icons.delete_outline_rounded, size: 18),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.red,
+                      disabledForegroundColor: AppColors.textSubdued,
+                      side: BorderSide(
+                        color: _isBusy
+                            ? AppColors.decorativeSubdued.withOpacity(0.5)
+                            : Colors.red,
+                        width: 1,
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    onPressed: _isBusy ? null : widget.onDelete,
+                    label: const Text('Hapus'),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );

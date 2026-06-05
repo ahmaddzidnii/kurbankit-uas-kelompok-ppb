@@ -24,6 +24,9 @@ import 'package:qurban_kit/features/onboarding/presentation/screens/onboarding.d
 import 'package:qurban_kit/features/qurban_distribution/data/models/calculator_models.dart';
 import 'package:qurban_kit/features/splash/presentation/screens/splash.dart';
 
+import 'package:qurban_kit/features/mosque_dashboard/presentation/screens/periods/period_calculations_page.dart';
+import 'package:qurban_kit/features/mosque_dashboard/presentation/screens/periods/period_calculations_detail_page.dart';
+
 class AppRouter {
   static final GoRouter router = GoRouter(
     initialLocation: '/splash',
@@ -88,6 +91,35 @@ class AppRouter {
       GoRoute(
         path: '/periods',
         builder: (context, state) => const PeriodsPage(),
+      ),
+      GoRoute(
+        path: '/period-calculations',
+        builder: (context, state) {
+          // Mengambil data penunjang yang dikirim melalui extra
+          final extraData = state.extra as Map<String, dynamic>? ?? {};
+          final periodId = extraData['periodId'] ?? '';
+          final periodTitle = extraData['periodTitle'] ?? 'Perhitungan';
+
+          return PeriodCalculationsPage(
+            periodId: periodId,
+            periodTitle: periodTitle,
+          );
+        },
+      ),
+      GoRoute(
+        path: '/period-calculation-detail/:id',
+        builder: (context, state) {
+          final itemId = state.pathParameters['id']!;
+          final extraData = state.extra as Map<String, dynamic>? ?? {};
+          final itemTitle = extraData['title'] ?? 'Detail Perhitungan';
+          final animalType = extraData['animalType'] ?? 'sapi';
+
+          return PeriodCalculationsDetailPage(
+            itemId: itemId,
+            itemTitle: itemTitle,
+            animalType: animalType,
+          );
+        },
       ),
       GoRoute(
         path: '/mosque-settings',

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:qurban_kit/core/services/cache_service.dart';
 import 'package:qurban_kit/core/configs/theme/theme.dart';
+
+import 'package:go_router/go_router.dart';
 
 class PeriodCalculationsPage extends StatefulWidget {
   final String periodId;
@@ -288,7 +289,19 @@ class _PeriodCalculationsPageState extends State<PeriodCalculationsPage>
         // Mengembalikan InkWell secara langsung tanpa dibungkus Dismissible
         return InkWell(
           onTap: () {
-            print("Buka detail untuk ID: ${item['id']}.");
+            // Navigasi menggunakan GoRouter dengan membawa ID di path, dan data lain di extra
+            context
+                .push(
+                  '/period-calculation-detail/${item['id']}',
+                  extra: {
+                    'title': item['title'],
+                    'animalType': item['animalType'],
+                  },
+                )
+                .then((_) {
+                  // Otomatis refresh list jika kembali dari halaman detail
+                  _loadItems();
+                });
           },
           // Opsi edit & delete dipindahkan sepenuhnya ke long press / bottom sheet
           onLongPress: () => _showOptionsBottomSheet(item),
