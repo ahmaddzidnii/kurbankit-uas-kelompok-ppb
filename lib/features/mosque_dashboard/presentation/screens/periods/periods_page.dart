@@ -5,6 +5,7 @@ import 'package:qurban_kit/core/configs/theme/theme.dart';
 import 'package:qurban_kit/core/services/cache_service.dart';
 import 'package:qurban_kit/core/services/service_locator.dart';
 import 'package:qurban_kit/features/mosque_dashboard/data/models/period_model.dart';
+import 'period_calculations_page.dart';
 
 class PeriodsPage extends StatefulWidget {
   const PeriodsPage({super.key});
@@ -960,23 +961,84 @@ class _PeriodDetailSheetState extends State<_PeriodDetailSheet> {
                 ],
               ),
               const SizedBox(height: AppSpacing.xl),
+
+              // ================= BUTTON UTAMA (Data Perhitungan) =================
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: _isBusy ? null : widget.onEdit,
-                  child: const Text('Edit Periode'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.essentialBrightAccent,
+                    foregroundColor: Colors.white,
+                    // State ketika disabled (loading / busy)
+                    disabledBackgroundColor: AppColors.decorativeSubdued,
+                    disabledForegroundColor: AppColors.textSubdued,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    elevation: _isBusy
+                        ? 0
+                        : 1, // Hilangkan shadow saat disabled
+                  ),
+                  onPressed: _isBusy
+                      ? null
+                      : () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => PeriodCalculationsPage(
+                                periodId: widget.period.id,
+                                periodTitle: widget.period.displayTitle,
+                              ),
+                            ),
+                          );
+                        },
+                  child: const Text('Data Perhitungan'),
                 ),
               ),
-              const SizedBox(height: AppSpacing.sm),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton(
-                  onPressed: _isBusy ? null : widget.onDelete,
-                  child: const Text(
-                    'Hapus Periode',
-                    style: TextStyle(color: Colors.red),
+              const SizedBox(height: AppSpacing.md),
+
+              // ================= BUTTON SEKUNDER (Edit & Hapus) =================
+              Row(
+                children: [
+                  // --- Tombol Edit ---
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      icon: const Icon(Icons.edit_rounded, size: 18),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.textBase,
+                        disabledForegroundColor: AppColors.textSubdued,
+                        // Mengubah warna border jadi lebih samar saat disabled
+                        side: BorderSide(
+                          color: _isBusy
+                              ? AppColors.decorativeSubdued.withOpacity(0.5)
+                              : AppColors.decorativeSubdued,
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      onPressed: _isBusy ? null : widget.onEdit,
+                      label: const Text('Edit'),
+                    ),
                   ),
-                ),
+                  const SizedBox(width: AppSpacing.md),
+
+                  // --- Tombol Hapus ---
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      icon: const Icon(Icons.delete_outline_rounded, size: 18),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.red,
+                        disabledForegroundColor: AppColors.textSubdued,
+                        // PENTING: Jika tidak diatur, border akan tetap merah menyala saat disabled
+                        side: BorderSide(
+                          color: _isBusy
+                              ? AppColors.decorativeSubdued.withOpacity(0.5)
+                              : Colors.red,
+                          width: 1,
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      onPressed: _isBusy ? null : widget.onDelete,
+                      label: const Text('Hapus'),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
