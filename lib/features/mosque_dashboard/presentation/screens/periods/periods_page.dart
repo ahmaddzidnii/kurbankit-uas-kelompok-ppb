@@ -3,6 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:qurban_kit/core/configs/exceptions.dart';
 import 'package:qurban_kit/core/configs/theme/theme.dart';
+import 'dart:convert';
+
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:qurban_kit/core/services/cache_service.dart';
 import 'package:qurban_kit/core/services/service_locator.dart';
 import 'package:qurban_kit/features/mosque_dashboard/data/models/period_model.dart';
@@ -105,6 +108,22 @@ class _PeriodsPageState extends State<PeriodsPage> {
         await periodDataSource.activatePeriod(period.id);
       } else if (!value && period.isActive) {
         await periodDataSource.updatePeriod(period.id, isActive: false);
+      }
+      // sync cached active period after successful change
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final periods = await periodDataSource.getPeriods();
+        final actives = periods.where((p) => p.isActive).toList();
+        if (actives.isNotEmpty) {
+          await prefs.setString(
+            'cached_active_period',
+            jsonEncode(actives.first.toJson()),
+          );
+        } else {
+          await prefs.remove('cached_active_period');
+        }
+      } catch (_) {
+        // ignore cache write errors
       }
     } catch (e) {
       if (!mounted) return;
@@ -256,6 +275,18 @@ class _PeriodsPageState extends State<PeriodsPage> {
                                     await periodDataSource.deletePeriod(
                                       period.id,
                                     );
+
+                                    // if deleted period was active, clear cache
+                                    try {
+                                      if (period.isActive) {
+                                        final prefs =
+                                            await SharedPreferences.getInstance();
+                                        await prefs.remove(
+                                          'cached_active_period',
+                                        );
+                                      }
+                                    } catch (_) {}
+
                                     if (dialogContext.mounted) {
                                       Navigator.of(dialogContext).pop(true);
                                     }
@@ -365,6 +396,21 @@ class _PeriodsPageState extends State<PeriodsPage> {
                     isActive: isActive,
                   );
                 }
+
+                // sync cached active period after create/update
+                try {
+                  final prefs = await SharedPreferences.getInstance();
+                  final periods = await periodDataSource.getPeriods();
+                  final actives = periods.where((p) => p.isActive).toList();
+                  if (actives.isNotEmpty) {
+                    await prefs.setString(
+                      'cached_active_period',
+                      jsonEncode(actives.first.toJson()),
+                    );
+                  } else {
+                    await prefs.remove('cached_active_period');
+                  }
+                } catch (_) {}
 
                 if (!dialogContext.mounted) return;
                 Navigator.of(dialogContext).pop(true);

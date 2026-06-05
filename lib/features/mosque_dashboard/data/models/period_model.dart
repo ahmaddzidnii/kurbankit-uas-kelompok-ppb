@@ -73,6 +73,16 @@ class PeriodModel {
 
   String get displaySubtitle => 'Hijriah $tahunHijriah • Masehi $tahunMasehi';
 
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'nama': nama,
+      'tahun_hijriah': tahunHijriah,
+      'tahun_masehi': tahunMasehi,
+      'is_active': isActive,
+    };
+  }
+
   static String? _readString(Map<String, dynamic> json, List<String> keys) {
     for (final key in keys) {
       final value = json[key];

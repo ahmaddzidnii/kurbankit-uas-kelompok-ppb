@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:qurban_kit/core/configs/theme/theme.dart';
+import 'dart:convert';
+
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:qurban_kit/features/auth/data/models/auth_models.dart';
 import 'package:qurban_kit/features/mosque_dashboard/data/models/period_model.dart';
 import 'package:qurban_kit/core/services/service_locator.dart';
@@ -26,11 +29,41 @@ class _AdminHomePageState extends State<AdminHomePage> {
 
   Future<void> _loadActivePeriod() async {
     setState(() => _isLoadingPeriod = true);
+    final prefs = await SharedPreferences.getInstance();
+
+    // Try load cached active period first to avoid fetching on every navigation
+    final cached = prefs.getString('cached_active_period');
+    if (cached != null) {
+      try {
+        final json = jsonDecode(cached) as Map<String, dynamic>;
+        final model = PeriodModel.fromJson(json);
+        if (!mounted) return;
+        setState(() {
+          _activePeriod = model;
+          _isLoadingPeriod = false;
+        });
+        return;
+      } catch (_) {
+        // fall through to fetch if cache is invalid
+      }
+    }
+
     try {
       final periods = await periodDataSource.getPeriods();
       final actives = periods.where((p) => p.isActive).toList();
+      final active = actives.isNotEmpty ? actives.first : null;
       if (!mounted) return;
-      setState(() => _activePeriod = actives.isNotEmpty ? actives.first : null);
+      setState(() => _activePeriod = active);
+
+      // persist active period for later use (backend operations)
+      if (active != null) {
+        await prefs.setString(
+          'cached_active_period',
+          jsonEncode(active.toJson()),
+        );
+      } else {
+        await prefs.remove('cached_active_period');
+      }
     } catch (_) {
       // keep existing UI if fetching fails
     } finally {
