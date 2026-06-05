@@ -372,14 +372,6 @@ class _CalculatorResultPageState extends State<CalculatorResultPage>
 
   Widget _buildAllocationProgress(CalculatorResult result) {
     final allocationEntries = result.allocations.entries.toList();
-    final totalAllocated = result.allocations.values.fold<double>(
-      0,
-      (sum, value) => sum + value,
-    );
-    final ratio = result.totalWeight <= 0
-        ? 0.0
-        : totalAllocated / result.totalWeight;
-
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
@@ -400,14 +392,6 @@ class _CalculatorResultPageState extends State<CalculatorResultPage>
                   color: AppColors.textBase,
                 ),
               ),
-              // Text(
-              //   'TOTAL PERSENTASE: ${(ratio * 100).toStringAsFixed(0)}%',
-              //   style: TextStyle(
-              //     fontSize: AppTypography.labelSmall,
-              //     fontWeight: AppTypography.semiBold,
-              //     color: AppColors.essentialBrightAccent,
-              //   ),
-              // ),
             ],
           ),
           const SizedBox(height: AppSpacing.md),
@@ -459,11 +443,6 @@ class _CalculatorResultPageState extends State<CalculatorResultPage>
     List<MapEntry<String, double>> allocationEntries,
     CalculatorResult result,
   ) {
-    final totalAllocated = result.allocations.values.fold<double>(
-      0,
-      (sum, value) => sum + value,
-    );
-
     return SizedBox(
       height: 8,
       child: Row(
@@ -491,13 +470,102 @@ class _CalculatorResultPageState extends State<CalculatorResultPage>
           width: double.infinity,
           child: ElevatedButton(
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Hasil telah disimpan')),
+              // Menampilkan Modal Bottom Sheet
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled:
+                    true, // Penting agar sheet bisa naik saat keyboard muncul
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.vertical(
+                    top: Radius.circular(AppRadius.md),
+                  ),
+                ),
+                builder: (BuildContext context) {
+                  return Padding(
+                    // Padding bawah dinamis menyesuaikan tinggi keyboard
+                    padding: EdgeInsets.only(
+                      bottom: MediaQuery.of(context).viewInsets.bottom,
+                      left: AppSpacing.md, // Asumsi kamu punya konstanta ini
+                      right: AppSpacing.md,
+                      top: AppSpacing.md,
+                    ),
+                    child: Column(
+                      mainAxisSize:
+                          MainAxisSize.min, // Sesuaikan tinggi dengan konten
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Simpan Hasil',
+                          style: TextStyle(
+                            fontSize: AppTypography
+                                .bodyMedium, // Sesuaikan dengan style kamu
+                            fontWeight: AppTypography.semiBold,
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+
+                        // Field Input Judul Perhitungan
+                        TextField(
+                          autofocus: true,
+                          autocorrect:
+                              false, // <-- Mematikan koreksi otomatis (menghilangkan underline ketikan)
+                          enableSuggestions: false,
+                          decoration: InputDecoration(
+                            labelText: 'Judul Perhitungan',
+                            hintText: 'Masukkan judul...',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(AppRadius.md),
+                            ),
+                          ),
+                          // controller: _titleController, // Gunakan controller jika kamu ingin menangkap nilainya
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+
+                        // Tombol Konfirmasi Simpan
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              // 1. Tutup bottom sheet terlebih dahulu
+                              Navigator.pop(context);
+
+                              // 2. Eksekusi fungsi simpan kamu di sini
+                              // ...
+
+                              // 3. Tampilkan notifikasi berhasil
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Hasil telah disimpan'),
+                                ),
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.essentialBrightAccent,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.md,
+                                ),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                            ),
+                            child: const Text(
+                              'Konfirmasi Simpan',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: AppTypography.semiBold,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                      ],
+                    ),
+                  );
+                },
               );
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.essentialBrightAccent,
-
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(AppRadius.md),
               ),

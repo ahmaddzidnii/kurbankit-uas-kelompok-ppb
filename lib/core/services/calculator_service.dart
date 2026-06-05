@@ -17,7 +17,7 @@ class CalculatorService {
     ),
     CalculatorTemplate(
       id: 'template_c',
-      name: 'Kustom Mandiri',
+      name: 'Distribusi Kustom',
       description:
           'Fleksibilitas penuh untuk menentukan persentase atau bobot distribusi mandiri hasil dari keputusan musyawarah panitia.',
       formulas: [

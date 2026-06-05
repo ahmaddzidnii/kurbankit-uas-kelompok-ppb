@@ -19,7 +19,6 @@ class _CalculatorInputPageState extends State<CalculatorInputPage>
 
   final sapiWeightController = TextEditingController();
   final kambingWeightController = TextEditingController();
-  final kelompokNameController = TextEditingController();
 
   late List<RecipientCategory> categories;
 
@@ -68,7 +67,6 @@ class _CalculatorInputPageState extends State<CalculatorInputPage>
     _tabController.dispose();
     sapiWeightController.dispose();
     kambingWeightController.dispose();
-    kelompokNameController.dispose();
     for (final controller in sapiCategoryControllers.values) {
       controller.dispose();
     }
@@ -85,62 +83,102 @@ class _CalculatorInputPageState extends State<CalculatorInputPage>
   }
 
   void _addCategoryForTemplateC() {
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      builder: (dialogContext) {
+      isScrollControlled:
+          true, // Membuat bottom sheet mengikuti tinggi konten & keyboard
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(16),
+        ), // Membuat sudut atas melengkung
+      ),
+      builder: (sheetContext) {
         final nameController = TextEditingController();
 
-        return AlertDialog(
-          title: const Text('Tambah Kategori'),
-          content: TextField(
-            controller: nameController,
-            decoration: const InputDecoration(
-              labelText: 'Nama Kategori',
-              hintText: 'Cth: Panitia, Warga RT 01',
+        return Padding(
+          // Padding bottom otomatis menyesuaikan tinggi keyboard yang muncul
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 20,
+            bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 20,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize:
+                  MainAxisSize.min, // Agar tinggi sheet sesuai jumlah konten
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  'Tambah Kategori',
+                  style: Theme.of(sheetContext).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.normal,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: nameController,
+                  autofocus:
+                      true, // Otomatis fokus dan membuka keyboard saat sheet muncul
+                  decoration: const InputDecoration(
+                    labelText: 'Nama Kategori',
+                    hintText: 'Cth: Pendatang, Warga Tetap, Mustahik',
+                    border:
+                        OutlineInputBorder(), // Tampilan border lebih rapi di bottom sheet
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => sheetContext.pop(),
+                      child: const Text('Batal'),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton(
+                      onPressed: () {
+                        final categoryName = nameController.text.trim();
+                        if (categoryName.isEmpty ||
+                            categories.any(
+                              (item) => item.name == categoryName,
+                            )) {
+                          return;
+                        }
+
+                        setState(() {
+                          categories = [
+                            ...categories,
+                            RecipientCategory(
+                              name: categoryName,
+                              description: '',
+                              count: 0,
+                            ),
+                          ];
+
+                          sapiRecipientCounts[categoryName] = 0;
+                          kambingRecipientCounts[categoryName] = 0;
+                          sapiCategoryControllers[categoryName] =
+                              TextEditingController();
+                          kambingCategoryControllers[categoryName] =
+                              TextEditingController();
+                          sapiCustomPercentages[categoryName] = 0;
+                          kambingCustomPercentages[categoryName] = 0;
+                          sapiPercentageControllers[categoryName] =
+                              TextEditingController();
+                          kambingPercentageControllers[categoryName] =
+                              TextEditingController();
+                        });
+
+                        sheetContext.pop();
+                      },
+                      child: const Text('Tambah'),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => dialogContext.pop(),
-              child: const Text('Batal'),
-            ),
-            TextButton(
-              onPressed: () {
-                final categoryName = nameController.text.trim();
-                if (categoryName.isEmpty ||
-                    categories.any((item) => item.name == categoryName)) {
-                  return;
-                }
-
-                setState(() {
-                  categories = [
-                    ...categories,
-                    RecipientCategory(
-                      name: categoryName,
-                      description: '',
-                      count: 0,
-                    ),
-                  ];
-
-                  sapiRecipientCounts[categoryName] = 0;
-                  kambingRecipientCounts[categoryName] = 0;
-                  sapiCategoryControllers[categoryName] =
-                      TextEditingController();
-                  kambingCategoryControllers[categoryName] =
-                      TextEditingController();
-                  sapiCustomPercentages[categoryName] = 0;
-                  kambingCustomPercentages[categoryName] = 0;
-                  sapiPercentageControllers[categoryName] =
-                      TextEditingController();
-                  kambingPercentageControllers[categoryName] =
-                      TextEditingController();
-                });
-
-                dialogContext.pop();
-              },
-              child: const Text('Tambah'),
-            ),
-          ],
         );
       },
     );
@@ -243,14 +281,6 @@ class _CalculatorInputPageState extends State<CalculatorInputPage>
         sapiCustomPercentages: sapiCustomPercentages,
         kambingCustomPercentages: kambingCustomPercentages,
       );
-
-      // Add group name to the comparison result
-      try {
-        comparisonResult.kelompokName = kelompokNameController.text.trim();
-      } catch (e) {
-        // If controller is not available, leave kelompokName as null
-        comparisonResult.kelompokName = null;
-      }
 
       context.push('/calculator-result', extra: comparisonResult);
     } catch (error) {
@@ -374,64 +404,7 @@ class _CalculatorInputPageState extends State<CalculatorInputPage>
             ),
           ),
           const SizedBox(height: AppSpacing.xl),
-          if (speciesLabel == 'Sapi')
-            Padding(
-              padding: const EdgeInsets.only(bottom: AppSpacing.xl),
-              child: Container(
-                padding: const EdgeInsets.all(AppSpacing.md),
-                decoration: BoxDecoration(
-                  color: AppColors.backgroundElevatedBase,
-                  border: Border.all(color: AppColors.decorativeSubdued),
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Nama Kelompok',
-                      style: TextStyle(
-                        fontSize: AppTypography.bodyLarge,
-                        fontWeight: AppTypography.semiBold,
-                        color: AppColors.textBase,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                    Text(
-                      'Masukkan nama kelompok atau organisasi yang berkurban',
-                      style: TextStyle(
-                        fontSize: AppTypography.bodySmall,
-                        color: AppColors.textSubdued,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    TextField(
-                      controller: kelompokNameController,
-                      decoration: InputDecoration(
-                        hintText: 'Cth: Kelompok 1',
-                        filled: true,
-                        fillColor: Colors.white,
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.md,
-                          vertical: AppSpacing.md,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
-                          borderSide: const BorderSide(
-                            color: AppColors.decorativeSubdued,
-                          ),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
-                          borderSide: const BorderSide(
-                            color: AppColors.decorativeSubdued,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+
           _buildWeightCard(
             title: speciesLabel,
             helperText:
@@ -554,7 +527,7 @@ class _CalculatorInputPageState extends State<CalculatorInputPage>
             controller: controller,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             decoration: InputDecoration(
-              hintText: 'Kosongkan jika tidak ada',
+              hintText: '0',
               suffixText: 'kg',
               filled: true,
               fillColor: Colors.white,
@@ -708,8 +681,8 @@ class _CalculatorInputPageState extends State<CalculatorInputPage>
                 },
                 decoration: InputDecoration(
                   hintText: category.name == 'Shohibul'
-                      ? 'Masukkan jumlah Shohibul'
-                      : 'Masukkan jumlah KK',
+                      ? 'Jumlah shohibul'
+                      : 'Jumlah KK',
                   suffixText: category.name == 'Shohibul' ? 'orang' : 'KK',
                   filled: true,
                   fillColor: Colors.white,
