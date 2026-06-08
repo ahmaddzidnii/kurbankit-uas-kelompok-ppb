@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:qurban_kit/core/configs/theme/theme.dart';
 import 'package:qurban_kit/core/services/calculator_service.dart';
 import 'package:qurban_kit/features/qurban_distribution/data/models/calculator_models.dart';
+import 'package:qurban_kit/core/services/service_locator.dart';
 
 class PeriodCalculationsDetailPage extends StatelessWidget {
   final String itemId;
@@ -18,16 +19,91 @@ class PeriodCalculationsDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // TODO: Ganti dummyResult ini dengan data asli yang di-fetch berdasarkan itemId
-    final dummyResult = CalculatorResult(
-      animals: [],
-      totalWeight: 150.0,
-      totalBags: 100,
-      allocations: {'Shohibul Qurban': 50.0, 'Masyarakat Sekitar': 100.0},
-      recipientCounts: {'Shohibul Qurban': 5, 'Masyarakat Sekitar': 95},
-      perBagWeight: {'Shohibul Qurban': 10.0, 'Masyarakat Sekitar': 1.05},
-      templateId: 'template_b',
-    );
+    Future<CalculatorResult?> fetchResult() async {
+      try {
+        final data = await calculationDataSource.getCalculationById(itemId);
+
+        if (data.isEmpty) return null;
+
+        // If API returns envelope { data: { ... } }, use it
+        Map<String, dynamic> itemMap = (data['data'] is Map<String, dynamic>)
+            ? data['data'] as Map<String, dynamic>
+            : data;
+
+        final detail = itemMap['detail'] as Map<String, dynamic>?;
+        if (detail == null) return null;
+
+        final animals = <AnimalData>[];
+        final rawAnimals = detail['animals'];
+        if (rawAnimals is List) {
+          for (final a in rawAnimals) {
+            try {
+              animals.add(
+                AnimalData(
+                  type: a['type']?.toString() ?? '',
+                  weight: (a['weight'] is num)
+                      ? (a['weight'] as num).toDouble()
+                      : double.tryParse(a['weight']?.toString() ?? '0') ?? 0.0,
+                  count: a['count'] is int
+                      ? a['count']
+                      : int.tryParse(a['count']?.toString() ?? '1') ?? 1,
+                ),
+              );
+            } catch (_) {}
+          }
+        }
+
+        final allocations = <String, double>{};
+        final recipientCounts = <String, int>{};
+        final perBagWeight = <String, double>{};
+
+        if (detail['allocations'] is Map) {
+          (detail['allocations'] as Map<String, dynamic>).forEach((k, v) {
+            allocations[k] = (v is num)
+                ? v.toDouble()
+                : double.tryParse(v?.toString() ?? '0') ?? 0.0;
+          });
+        }
+
+        if (detail['recipientCounts'] is Map) {
+          (detail['recipientCounts'] as Map<String, dynamic>).forEach((k, v) {
+            recipientCounts[k] = (v is int)
+                ? v
+                : int.tryParse(v?.toString() ?? '0') ?? 0;
+          });
+        }
+
+        if (detail['perBagWeight'] is Map) {
+          (detail['perBagWeight'] as Map<String, dynamic>).forEach((k, v) {
+            perBagWeight[k] = (v is num)
+                ? v.toDouble()
+                : double.tryParse(v?.toString() ?? '0') ?? 0.0;
+          });
+        }
+
+        final totalWeight = (detail['totalWeight'] is num)
+            ? (detail['totalWeight'] as num).toDouble()
+            : double.tryParse(detail['totalWeight']?.toString() ?? '0') ?? 0.0;
+        final totalBags = (detail['totalBags'] is int)
+            ? detail['totalBags']
+            : int.tryParse(detail['totalBags']?.toString() ?? '0') ?? 0;
+        final templateId =
+            detail['templateId']?.toString() ??
+            (data['template']?.toString() ?? '');
+
+        return CalculatorResult(
+          templateId: templateId,
+          animals: animals,
+          totalWeight: totalWeight,
+          totalBags: totalBags,
+          allocations: allocations,
+          recipientCounts: recipientCounts,
+          perBagWeight: perBagWeight,
+        );
+      } catch (_) {
+        return null;
+      }
+    }
 
     final String titleDisplay = animalType.toLowerCase() == 'sapi'
         ? 'Hasil Sapi'
@@ -42,7 +118,6 @@ class PeriodCalculationsDetailPage extends StatelessWidget {
           icon: const Icon(Icons.arrow_back, color: AppColors.textBase),
           onPressed: () => context.pop(),
         ),
-        // 1. Title AppBar Dibuat Statis
         title: const Text(
           "Detail Perhitungan",
           style: TextStyle(
@@ -52,69 +127,92 @@ class PeriodCalculationsDetailPage extends StatelessWidget {
           ),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 2. Judul Item (itemTitle) diletakkan di body agar bebas dari overflow
-            if (itemTitle.isNotEmpty) ...[
-              Text(
-                itemTitle,
-                style: const TextStyle(
-                  fontSize:
-                      24, // Sesuaikan dengan ukuran typography terbesarmu (misal: AppTypography.headingLarge)
-                  fontWeight: AppTypography.bold,
-                  color: AppColors.textBase,
-                  height: 1.3,
+      body: FutureBuilder<CalculatorResult?>(
+        future: fetchResult(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState != ConnectionState.done) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          final result = snapshot.data;
+          if (result == null) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.lg),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.inbox_rounded,
+                      size: 56,
+                      color: AppColors.essentialBrightAccent,
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    const Text('Detail perhitungan tidak tersedia'),
+                  ],
                 ),
               ),
-              const SizedBox(height: AppSpacing.md),
-            ],
+            );
+          }
 
-            // Header Card (Gradient)
-            _buildHeaderCard(titleDisplay, dummyResult),
-            const SizedBox(height: AppSpacing.xl),
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (itemTitle.isNotEmpty) ...[
+                  Text(
+                    itemTitle,
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: AppTypography.bold,
+                      color: AppColors.textBase,
+                      height: 1.3,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                ],
 
-            // Judul Section Detail Pembagian
-            const Text(
-              'Detail Pembagian',
-              style: TextStyle(
-                fontSize: AppTypography.headingMedium,
-                fontWeight: AppTypography.semiBold,
-                color: AppColors.textBase,
-              ),
+                _buildHeaderCard(titleDisplay, result),
+                const SizedBox(height: AppSpacing.xl),
+
+                const Text(
+                  'Detail Pembagian',
+                  style: TextStyle(
+                    fontSize: AppTypography.headingMedium,
+                    fontWeight: AppTypography.semiBold,
+                    color: AppColors.textBase,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.md),
+
+                ...result.allocations.entries.map((entry) {
+                  final categoryName = entry.key;
+                  final allocation = entry.value;
+                  final recipientCount =
+                      result.recipientCounts[categoryName] ?? 0;
+                  final perBagWeight = result.perBagWeight[categoryName] ?? 0;
+
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: AppSpacing.lg),
+                    child: _buildDetailItem(
+                      categoryName: categoryName,
+                      recipientCount: recipientCount,
+                      totalAllocation: allocation,
+                      perBagWeight: perBagWeight,
+                    ),
+                  );
+                }),
+
+                _buildAllocationProgress(result),
+                const SizedBox(height: AppSpacing.xl),
+
+                _buildNoteCard(result),
+                const SizedBox(height: AppSpacing.lg),
+              ],
             ),
-            const SizedBox(height: AppSpacing.md),
-
-            // List Item Detail
-            ...dummyResult.allocations.entries.map((entry) {
-              final categoryName = entry.key;
-              final allocation = entry.value;
-              final recipientCount =
-                  dummyResult.recipientCounts[categoryName] ?? 0;
-              final perBagWeight = dummyResult.perBagWeight[categoryName] ?? 0;
-
-              return Padding(
-                padding: const EdgeInsets.only(bottom: AppSpacing.lg),
-                child: _buildDetailItem(
-                  categoryName: categoryName,
-                  recipientCount: recipientCount,
-                  totalAllocation: allocation,
-                  perBagWeight: perBagWeight,
-                ),
-              );
-            }),
-
-            // Progress Bar Multi-warna (Ringkasan Distribusi)
-            _buildAllocationProgress(dummyResult),
-            const SizedBox(height: AppSpacing.xl),
-
-            // Catatan Perhitungan
-            _buildNoteCard(dummyResult),
-            const SizedBox(height: AppSpacing.lg),
-          ],
-        ),
+          );
+        },
       ),
     );
   }

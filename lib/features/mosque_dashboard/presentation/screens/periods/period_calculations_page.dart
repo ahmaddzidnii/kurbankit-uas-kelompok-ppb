@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:qurban_kit/core/services/cache_service.dart';
+import 'package:qurban_kit/core/services/service_locator.dart';
 import 'package:qurban_kit/core/configs/theme/theme.dart';
 
 import 'package:go_router/go_router.dart';
@@ -21,7 +22,7 @@ class PeriodCalculationsPage extends StatefulWidget {
 class _PeriodCalculationsPageState extends State<PeriodCalculationsPage>
     with SingleTickerProviderStateMixin {
   final _cache = CacheService();
-  late List<Map<String, dynamic>> _items;
+  late List<Map<String, dynamic>> _items = <Map<String, dynamic>>[];
   late String _cacheKey;
   bool _loading = true;
   late TabController _tabController;
@@ -40,58 +41,28 @@ class _PeriodCalculationsPageState extends State<PeriodCalculationsPage>
     super.dispose();
   }
 
-  // Fungsi untuk membuat data dummy awal jika cache kosong
-  List<Map<String, dynamic>> _generateDummyData() {
-    return [
-      {
-        'id': 'dummy_sapi_1',
-        'animalType': 'sapi',
-        'title': 'Sapi Kelompok Al-Fatih',
-        'templateName': 'Template Sapi A (7 Orang)',
-        'savedAt': DateTime.now()
-            .subtract(const Duration(hours: 2))
-            .toIso8601String(),
-      },
-      {
-        'id': 'dummy_sapi_2',
-        'animalType': 'sapi',
-        'title': 'Sapi Tabungan Mandiri',
-        'templateName': 'Template Sapi B (7 Orang)',
-        'savedAt': DateTime.now()
-            .subtract(const Duration(days: 1))
-            .toIso8601String(),
-      },
-      {
-        'id': 'dummy_kambing_1',
-        'animalType': 'kambing',
-        'title': 'Kambing Etawa Premium',
-        'templateName': 'Template Perorangan',
-        'savedAt': DateTime.now()
-            .subtract(const Duration(hours: 4))
-            .toIso8601String(),
-      },
-      {
-        'id': 'dummy_kambing_2',
-        'animalType': 'kambing',
-        'title': 'Kambing Gibas Standar',
-        'templateName': 'Template Perorangan',
-        'savedAt': DateTime.now()
-            .subtract(const Duration(days: 2))
-            .toIso8601String(),
-      },
-    ];
-  }
-
   Future<void> _loadItems() async {
     setState(() => _loading = true);
     try {
-      // Jika data dari cache kosong, pakai data dummy agar list tidak kosong
-      if (_items.isEmpty) {
-        _items = _generateDummyData();
-        await _saveItems();
-      }
+      // Coba ambil dari server terlebih dahulu
+      final serverItems = await calculationDataSource.getCalculationsForPeriod(
+        widget.periodId,
+      );
+      _items = serverItems.map((e) => Map<String, dynamic>.from(e)).toList();
+      // simpan hasil server (boleh kosong) ke cache agar offline tetap akurat
+      await _saveItems();
     } catch (_) {
-      _items = _generateDummyData();
+      // Jika fetch gagal, coba ambil dari cache. Jika cache kosong, tetap kosong (tampilkan empty state).
+      try {
+        final cached = _cache.read<List<dynamic>>(_cacheKey);
+        if (cached != null && cached.isNotEmpty) {
+          _items = cached.cast<Map<String, dynamic>>();
+        } else {
+          _items = <Map<String, dynamic>>[];
+        }
+      } catch (_) {
+        _items = <Map<String, dynamic>>[];
+      }
     }
     setState(() => _loading = false);
   }
@@ -289,6 +260,13 @@ class _PeriodCalculationsPageState extends State<PeriodCalculationsPage>
         // Mengembalikan InkWell secara langsung tanpa dibungkus Dismissible
         return InkWell(
           onTap: () {
+            // Cache selected item (so detail page can render without extra API)
+            try {
+              final key = 'period_calc_item_${item['id']}';
+              // Use CacheService.set with named params
+              _cache.set(key: key, value: item, ttl: const Duration(hours: 1));
+            } catch (_) {}
+
             // Navigasi menggunakan GoRouter dengan membawa ID di path, dan data lain di extra
             context
                 .push(
@@ -337,11 +315,20 @@ class _PeriodCalculationsPageState extends State<PeriodCalculationsPage>
                       const SizedBox(height: 4),
                       // Waktu simpan
                       Text(
-                        item['savedAt'] != null
-                            ? DateTime.parse(
-                                item['savedAt'],
-                              ).toLocal().toString().split('.').first
-                            : '-',
+                        (() {
+                          final s =
+                              item['savedAt'] ??
+                              item['createdAt'] ??
+                              item['created_at'];
+                          if (s == null) return '-';
+                          try {
+                            return DateTime.parse(
+                              s.toString(),
+                            ).toLocal().toString().split('.').first;
+                          } catch (_) {
+                            return s.toString();
+                          }
+                        })(),
                         style: TextStyle(
                           color: AppColors.textSubdued,
                           fontSize: AppTypography.bodySmall,

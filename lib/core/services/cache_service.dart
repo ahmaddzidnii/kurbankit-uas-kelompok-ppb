@@ -84,6 +84,17 @@ class CacheService {
 
   /// Get all cache keys (untuk debugging)
   List<String> get cacheKeys => _cache.keys.toList();
+
+  /// Read cache value synchronously if exists and not expired, otherwise null
+  T? read<T>(String key) {
+    final cached = _cache[key];
+    if (cached == null) return null;
+    if (cached.isExpired) {
+      _cache.remove(key);
+      return null;
+    }
+    return cached.value as T;
+  }
 }
 
 class _CacheEntry {
