@@ -473,7 +473,6 @@ class _CalculatorResultPageState extends State<CalculatorResultPage>
           width: double.infinity,
           child: ElevatedButton(
             onPressed: () {
-              // Menampilkan Modal Bottom Sheet dengan controller untuk judul
               final titleController = TextEditingController();
               showModalBottomSheet(
                 context: context,
@@ -484,185 +483,260 @@ class _CalculatorResultPageState extends State<CalculatorResultPage>
                   ),
                 ),
                 builder: (BuildContext ctx) {
-                  return Padding(
-                    padding: EdgeInsets.only(
-                      bottom: MediaQuery.of(ctx).viewInsets.bottom,
-                      left: AppSpacing.md,
-                      right: AppSpacing.md,
-                      top: AppSpacing.md,
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Simpan Hasil',
-                          style: TextStyle(
-                            fontSize: AppTypography.bodyMedium,
-                            fontWeight: AppTypography.semiBold,
-                          ),
+                  bool isLoading = false; // Inisialisasi state loading lokal
+
+                  // Gunakan StatefulBuilder agar bisa rebuild modal
+                  return StatefulBuilder(
+                    builder: (BuildContext context, StateSetter setModalState) {
+                      return Padding(
+                        padding: EdgeInsets.only(
+                          bottom: MediaQuery.of(ctx).viewInsets.bottom,
+                          left: AppSpacing.md,
+                          right: AppSpacing.md,
+                          top: AppSpacing.md,
                         ),
-                        const SizedBox(height: AppSpacing.md),
-
-                        TextField(
-                          controller: titleController,
-                          autofocus: true,
-                          autocorrect: false,
-                          enableSuggestions: false,
-                          decoration: InputDecoration(
-                            labelText: 'Judul Perhitungan',
-                            hintText: 'Masukkan judul... (opsional)',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(AppRadius.md),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: AppSpacing.md),
-
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: () async {
-                              final title = titleController.text.trim().isEmpty
-                                  ? 'Hasil Perhitungan'
-                                  : titleController.text.trim();
-
-                              Navigator.pop(ctx); // close sheet
-
-                              // ambil periode aktif dari shared prefs
-                              final prefs =
-                                  await SharedPreferences.getInstance();
-                              final cached = prefs.getString(
-                                'cached_active_period',
-                              );
-                              if (cached == null) {
-                                if (!mounted) return;
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'Tidak ada periode aktif. Aktifkan periode terlebih dahulu.',
-                                    ),
-                                  ),
-                                );
-                                return;
-                              }
-
-                              final period =
-                                  jsonDecode(cached) as Map<String, dynamic>;
-                              final periodId = period['id']?.toString() ?? '';
-                              if (periodId.isEmpty) {
-                                if (!mounted) return;
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Periode aktif tidak valid.'),
-                                  ),
-                                );
-                                return;
-                              }
-
-                              // Pilih hasil sesuai tab aktif
-                              final activeIndex = _tabController.index;
-                              final CalculatorResult? toSave = activeIndex == 0
-                                  ? widget.comparisonResult.sapiResult
-                                  : widget.comparisonResult.kambingResult;
-
-                              if (toSave == null) {
-                                if (!mounted) return;
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'Tidak ada hasil untuk disimpan pada tab ini.',
-                                    ),
-                                  ),
-                                );
-                                return;
-                              }
-
-                              // bangun payload detail sesuai kebutuhan UI
-                              final detail = <String, dynamic>{
-                                'animals': toSave.animals
-                                    .map(
-                                      (a) => {
-                                        'type': a.type,
-                                        'weight': a.weight,
-                                        'count': a.count,
-                                      },
-                                    )
-                                    .toList(),
-                                'totalWeight': toSave.totalWeight,
-                                'totalBags': toSave.totalBags,
-                                'allocations': toSave.allocations,
-                                'recipientCounts': toSave.recipientCounts,
-                                'perBagWeight': toSave.perBagWeight,
-                                'templateId': toSave.templateId,
-                              };
-
-                              try {
-                                String mapTemplateToServer(String? tpl) {
-                                  if (tpl == null || tpl.isEmpty)
-                                    return 'PROPROSIAL_SEDERHANA';
-                                  final s = tpl.toLowerCase();
-                                  if (s.contains('template_c') ||
-                                      s.contains('c') ||
-                                      s.contains('kustom') ||
-                                      s.contains('custom') ||
-                                      s.contains('musyawarah')) {
-                                    return 'DISTRIBUSI_KUSTOM';
-                                  }
-                                  return 'PROPROSIAL_SEDERHANA';
-                                }
-
-                                final templateEnum = mapTemplateToServer(
-                                  toSave.templateId,
-                                );
-
-                                final created = await calculationDataSource
-                                    .createCalculation(
-                                      idPeriode: periodId,
-                                      judul: title,
-                                      jenisHewan: activeIndex == 0
-                                          ? 'SAPI'
-                                          : 'KAMBING',
-                                      template: templateEnum,
-                                      detail: detail,
-                                    );
-
-                                if (!mounted) return;
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Hasil berhasil disimpan'),
-                                  ),
-                                );
-                              } catch (e) {
-                                if (!mounted) return;
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('Gagal menyimpan: $e'),
-                                  ),
-                                );
-                              }
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.essentialBrightAccent,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.md,
-                                ),
-                              ),
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                            ),
-                            child: const Text(
-                              'Konfirmasi Simpan',
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Simpan Hasil',
                               style: TextStyle(
-                                color: Colors.white,
+                                fontSize: AppTypography.bodyMedium,
                                 fontWeight: AppTypography.semiBold,
                               ),
                             ),
-                          ),
+                            const SizedBox(height: AppSpacing.md),
+
+                            TextField(
+                              controller: titleController,
+                              autofocus: true,
+                              autocorrect: false,
+                              enableSuggestions: false,
+                              enabled: !isLoading, // Kunci input saat loading
+                              decoration: InputDecoration(
+                                labelText: 'Judul Perhitungan',
+                                hintText: 'Masukkan judul...',
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.md,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: AppSpacing.md),
+
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                // Matikan tombol jika sedang loading
+                                onPressed: isLoading
+                                    ? null
+                                    : () async {
+                                        final title =
+                                            titleController.text.trim().isEmpty
+                                            ? 'Hasil Perhitungan'
+                                            : titleController.text.trim();
+
+                                        // 1. Mulai Loading
+                                        setModalState(() {
+                                          isLoading = true;
+                                        });
+
+                                        try {
+                                          final prefs =
+                                              await SharedPreferences.getInstance();
+                                          final cached = prefs.getString(
+                                            'cached_active_period',
+                                          );
+
+                                          if (cached == null) {
+                                            if (!mounted) return;
+                                            setModalState(
+                                              () => isLoading = false,
+                                            );
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              const SnackBar(
+                                                content: Text(
+                                                  'Tidak ada periode aktif. Aktifkan periode terlebih dahulu.',
+                                                ),
+                                              ),
+                                            );
+                                            return;
+                                          }
+
+                                          final period =
+                                              jsonDecode(cached)
+                                                  as Map<String, dynamic>;
+                                          final periodId =
+                                              period['id']?.toString() ?? '';
+
+                                          if (periodId.isEmpty) {
+                                            if (!mounted) return;
+                                            setModalState(
+                                              () => isLoading = false,
+                                            );
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              const SnackBar(
+                                                content: Text(
+                                                  'Periode aktif tidak valid.',
+                                                ),
+                                              ),
+                                            );
+                                            return;
+                                          }
+
+                                          final activeIndex =
+                                              _tabController.index;
+                                          final CalculatorResult? toSave =
+                                              activeIndex == 0
+                                              ? widget
+                                                    .comparisonResult
+                                                    .sapiResult
+                                              : widget
+                                                    .comparisonResult
+                                                    .kambingResult;
+
+                                          if (toSave == null) {
+                                            if (!mounted) return;
+                                            setModalState(
+                                              () => isLoading = false,
+                                            );
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              const SnackBar(
+                                                content: Text(
+                                                  'Tidak ada hasil untuk disimpan pada tab ini.',
+                                                ),
+                                              ),
+                                            );
+                                            return;
+                                          }
+
+                                          final detail = <String, dynamic>{
+                                            'animals': toSave.animals
+                                                .map(
+                                                  (a) => {
+                                                    'type': a.type,
+                                                    'weight': a.weight,
+                                                    'count': a.count,
+                                                  },
+                                                )
+                                                .toList(),
+                                            'totalWeight': toSave.totalWeight,
+                                            'totalBags': toSave.totalBags,
+                                            'allocations': toSave.allocations,
+                                            'recipientCounts':
+                                                toSave.recipientCounts,
+                                            'perBagWeight': toSave.perBagWeight,
+                                            'templateId': toSave.templateId,
+                                          };
+
+                                          String mapTemplateToServer(
+                                            String? tpl,
+                                          ) {
+                                            if (tpl == null || tpl.isEmpty)
+                                              return 'PROPROSIAL_SEDERHANA';
+                                            final s = tpl.toLowerCase();
+                                            if (s.contains('template_c') ||
+                                                s.contains('c') ||
+                                                s.contains('kustom') ||
+                                                s.contains('custom') ||
+                                                s.contains('musyawarah')) {
+                                              return 'DISTRIBUSI_KUSTOM';
+                                            }
+                                            return 'PROPROSIAL_SEDERHANA';
+                                          }
+
+                                          final templateEnum =
+                                              mapTemplateToServer(
+                                                toSave.templateId,
+                                              );
+
+                                          await calculationDataSource
+                                              .createCalculation(
+                                                idPeriode: periodId,
+                                                judul: title,
+                                                jenisHewan: activeIndex == 0
+                                                    ? 'SAPI'
+                                                    : 'KAMBING',
+                                                template: templateEnum,
+                                                detail: detail,
+                                              );
+
+                                          if (!mounted) return;
+                                          // 2. Sukses! Tutup modal
+                                          Navigator.pop(ctx);
+
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Hasil berhasil disimpan',
+                                              ),
+                                            ),
+                                          );
+                                        } catch (e) {
+                                          if (!mounted) return;
+                                          // 3. Gagal! Kembalikan state button dan biarkan modal tetap terbuka
+                                          setModalState(() {
+                                            isLoading = false;
+                                          });
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                'Gagal menyimpan: $e',
+                                              ),
+                                            ),
+                                          );
+                                        }
+                                      },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor:
+                                      AppColors.essentialBrightAccent,
+                                  disabledBackgroundColor: AppColors
+                                      .essentialBrightAccent
+                                      .withValues(alpha: 0.5),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(
+                                      AppRadius.md,
+                                    ),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 16,
+                                  ),
+                                ),
+                                child: isLoading
+                                    ? const SizedBox(
+                                        height: 24,
+                                        width: 24,
+                                        child: CircularProgressIndicator(
+                                          color: Colors.white,
+                                          strokeWidth: 2.5,
+                                        ),
+                                      )
+                                    : const Text(
+                                        'Konfirmasi Simpan',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: AppTypography.semiBold,
+                                        ),
+                                      ),
+                              ),
+                            ),
+                            const SizedBox(height: AppSpacing.md),
+                          ],
                         ),
-                        const SizedBox(height: AppSpacing.md),
-                      ],
-                    ),
+                      );
+                    },
                   );
                 },
               );

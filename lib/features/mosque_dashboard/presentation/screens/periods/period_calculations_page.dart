@@ -44,15 +44,12 @@ class _PeriodCalculationsPageState extends State<PeriodCalculationsPage>
   Future<void> _loadItems() async {
     setState(() => _loading = true);
     try {
-      // Coba ambil dari server terlebih dahulu
       final serverItems = await calculationDataSource.getCalculationsForPeriod(
         widget.periodId,
       );
       _items = serverItems.map((e) => Map<String, dynamic>.from(e)).toList();
-      // simpan hasil server (boleh kosong) ke cache agar offline tetap akurat
       await _saveItems();
     } catch (_) {
-      // Jika fetch gagal, coba ambil dari cache. Jika cache kosong, tetap kosong (tampilkan empty state).
       try {
         final cached = _cache.read<List<dynamic>>(_cacheKey);
         if (cached != null && cached.isNotEmpty) {
@@ -95,9 +92,12 @@ class _PeriodCalculationsPageState extends State<PeriodCalculationsPage>
     await _saveItems();
   }
 
-  // Dialog untuk mengganti nama item (Auto-generated name override)
   void _showEditNameDialog(Map<String, dynamic> item) {
-    final nameController = TextEditingController(text: item['title']);
+    final titleRaw = item['title']?.toString().trim();
+    final currentTitle = (titleRaw != null && titleRaw.isNotEmpty)
+        ? titleRaw
+        : '';
+    final nameController = TextEditingController(text: currentTitle);
 
     showDialog(
       context: context,
@@ -133,8 +133,12 @@ class _PeriodCalculationsPageState extends State<PeriodCalculationsPage>
     );
   }
 
-  // Bottom Sheet opsi ketika item ditahan (Long Press)
   void _showOptionsBottomSheet(Map<String, dynamic> item) {
+    final titleRaw = item['title']?.toString().trim();
+    final displayTitle = (titleRaw != null && titleRaw.isNotEmpty)
+        ? titleRaw
+        : 'Perhitungan Tanpa Judul';
+
     showModalBottomSheet(
       context: context,
       backgroundColor: AppColors.backgroundElevatedBase,
@@ -148,7 +152,7 @@ class _PeriodCalculationsPageState extends State<PeriodCalculationsPage>
               Padding(
                 padding: const EdgeInsets.all(AppSpacing.md),
                 child: Text(
-                  item['title'] ?? '-',
+                  displayTitle,
                   style: const TextStyle(fontWeight: FontWeight.bold),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -176,6 +180,28 @@ class _PeriodCalculationsPageState extends State<PeriodCalculationsPage>
         );
       },
     );
+  }
+
+  String _formatTemplateName(String? rawTemplate) {
+    if (rawTemplate == null || rawTemplate.isEmpty) return 'Template Standar';
+
+    switch (rawTemplate) {
+      case 'DISTRIBUSI_KUSTOM':
+        return 'Distribusi Kustom';
+      case 'PROPORSIONAL_SEDERHANA':
+        return 'Proporsional Sederhana';
+      default:
+        return rawTemplate
+            .replaceAll('_', ' ')
+            .toLowerCase()
+            .split(' ')
+            .map(
+              (word) => word.isNotEmpty
+                  ? '${word[0].toUpperCase()}${word.substring(1)}'
+                  : '',
+            )
+            .join(' ');
+    }
   }
 
   @override
@@ -218,7 +244,9 @@ class _PeriodCalculationsPageState extends State<PeriodCalculationsPage>
 
   Widget _buildAnimalList(String animalType) {
     final filteredItems = _items
-        .where((item) => item['animalType'] == animalType)
+        .where(
+          (item) => item['animalType']?.toString().toLowerCase() == animalType,
+        )
         .toList();
 
     if (filteredItems.isEmpty) {
@@ -257,31 +285,33 @@ class _PeriodCalculationsPageState extends State<PeriodCalculationsPage>
       itemBuilder: (ctx, i) {
         final item = filteredItems[i];
 
-        // Mengembalikan InkWell secara langsung tanpa dibungkus Dismissible
+        final titleRaw = item['title']?.toString().trim();
+        final displayTitle = (titleRaw != null && titleRaw.isNotEmpty)
+            ? titleRaw
+            : 'Perhitungan Tanpa Judul';
+
+        final rawTemplate = item['template'] ?? item['templateName'];
+        final displayTemplate = _formatTemplateName(rawTemplate?.toString());
+
         return InkWell(
           onTap: () {
-            // Cache selected item (so detail page can render without extra API)
             try {
               final key = 'period_calc_item_${item['id']}';
-              // Use CacheService.set with named params
               _cache.set(key: key, value: item, ttl: const Duration(hours: 1));
             } catch (_) {}
 
-            // Navigasi menggunakan GoRouter dengan membawa ID di path, dan data lain di extra
             context
                 .push(
                   '/period-calculation-detail/${item['id']}',
                   extra: {
-                    'title': item['title'],
+                    'title': displayTitle,
                     'animalType': item['animalType'],
                   },
                 )
                 .then((_) {
-                  // Otomatis refresh list jika kembali dari halaman detail
                   _loadItems();
                 });
           },
-          // Opsi edit & delete dipindahkan sepenuhnya ke long press / bottom sheet
           onLongPress: () => _showOptionsBottomSheet(item),
           child: Padding(
             padding: const EdgeInsets.symmetric(
@@ -290,52 +320,58 @@ class _PeriodCalculationsPageState extends State<PeriodCalculationsPage>
             ),
             child: Row(
               children: [
+                // Ikon di sebelah kiri
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.essentialBrightAccent.withValues(
+                      alpha: 0.1,
+                    ),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.calculate_outlined,
+                    color: AppColors.essentialBrightAccent,
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.md),
+
+                // Teks
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Nama Utama (Bisa Diedit)
                       Text(
-                        item['title'] ?? '-',
+                        displayTitle,
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 15,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 4),
-                      // Nama Template (Read Only)
                       Text(
-                        item['templateName'] ?? 'Template Standar',
+                        displayTemplate,
                         style: const TextStyle(
                           color: Colors.grey,
                           fontSize: 12,
                           fontStyle: FontStyle.italic,
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      // Waktu simpan
-                      Text(
-                        (() {
-                          final s =
-                              item['savedAt'] ??
-                              item['createdAt'] ??
-                              item['created_at'];
-                          if (s == null) return '-';
-                          try {
-                            return DateTime.parse(
-                              s.toString(),
-                            ).toLocal().toString().split('.').first;
-                          } catch (_) {
-                            return s.toString();
-                          }
-                        })(),
-                        style: TextStyle(
-                          color: AppColors.textSubdued,
-                          fontSize: AppTypography.bodySmall,
-                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+
+                // Ikon panah di sebelah kanan
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: AppColors.textSubdued.withValues(alpha: 0.5),
+                  size: 20,
                 ),
               ],
             ),
