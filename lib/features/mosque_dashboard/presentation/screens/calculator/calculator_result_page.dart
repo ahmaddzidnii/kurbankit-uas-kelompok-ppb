@@ -19,6 +19,7 @@ class CalculatorResultPage extends StatefulWidget {
 class _CalculatorResultPageState extends State<CalculatorResultPage>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
+  bool _isSavingCalculation = false;
 
   @override
   void initState() {
@@ -472,275 +473,327 @@ class _CalculatorResultPageState extends State<CalculatorResultPage>
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
-            onPressed: () {
-              final titleController = TextEditingController();
-              showModalBottomSheet(
-                context: context,
-                isScrollControlled: true,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.vertical(
-                    top: Radius.circular(AppRadius.md),
-                  ),
-                ),
-                builder: (BuildContext ctx) {
-                  bool isLoading = false; // Inisialisasi state loading lokal
+            onPressed: _isSavingCalculation
+                ? () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Sedang menyimpan, tunggu...'),
+                      ),
+                    );
+                  }
+                : () {
+                    final titleController = TextEditingController();
 
-                  // Gunakan StatefulBuilder agar bisa rebuild modal
-                  return StatefulBuilder(
-                    builder: (BuildContext context, StateSetter setModalState) {
-                      return Padding(
-                        padding: EdgeInsets.only(
-                          bottom: MediaQuery.of(ctx).viewInsets.bottom,
-                          left: AppSpacing.md,
-                          right: AppSpacing.md,
-                          top: AppSpacing.md,
+                    // 1. PINDAHKAN KE SINI: Deklarasi di luar builder agar tidak ter-reset
+                    // saat keyboard menutup dan me-rebuild MediaQuery.
+                    bool isLoading = false;
+
+                    showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.vertical(
+                          top: Radius.circular(AppRadius.md),
                         ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Simpan Hasil',
-                              style: TextStyle(
-                                fontSize: AppTypography.bodyMedium,
-                                fontWeight: AppTypography.semiBold,
+                      ),
+                      builder: (BuildContext ctx) {
+                        return StatefulBuilder(
+                          builder: (BuildContext context, StateSetter setModalState) {
+                            return Padding(
+                              padding: EdgeInsets.only(
+                                bottom: MediaQuery.of(ctx).viewInsets.bottom,
+                                left: AppSpacing.md,
+                                right: AppSpacing.md,
+                                top: AppSpacing.md,
                               ),
-                            ),
-                            const SizedBox(height: AppSpacing.md),
-
-                            TextField(
-                              controller: titleController,
-                              autofocus: true,
-                              autocorrect: false,
-                              enableSuggestions: false,
-                              enabled: !isLoading, // Kunci input saat loading
-                              decoration: InputDecoration(
-                                labelText: 'Judul Perhitungan',
-                                hintText: 'Masukkan judul...',
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(
-                                    AppRadius.md,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: AppSpacing.md),
-
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton(
-                                // Matikan tombol jika sedang loading
-                                onPressed: isLoading
-                                    ? null
-                                    : () async {
-                                        final title =
-                                            titleController.text.trim().isEmpty
-                                            ? 'Hasil Perhitungan'
-                                            : titleController.text.trim();
-
-                                        // 1. Mulai Loading
-                                        setModalState(() {
-                                          isLoading = true;
-                                        });
-
-                                        try {
-                                          final prefs =
-                                              await SharedPreferences.getInstance();
-                                          final cached = prefs.getString(
-                                            'cached_active_period',
-                                          );
-
-                                          if (cached == null) {
-                                            if (!mounted) return;
-                                            setModalState(
-                                              () => isLoading = false,
-                                            );
-                                            ScaffoldMessenger.of(
-                                              context,
-                                            ).showSnackBar(
-                                              const SnackBar(
-                                                content: Text(
-                                                  'Tidak ada periode aktif. Aktifkan periode terlebih dahulu.',
-                                                ),
-                                              ),
-                                            );
-                                            return;
-                                          }
-
-                                          final period =
-                                              jsonDecode(cached)
-                                                  as Map<String, dynamic>;
-                                          final periodId =
-                                              period['id']?.toString() ?? '';
-
-                                          if (periodId.isEmpty) {
-                                            if (!mounted) return;
-                                            setModalState(
-                                              () => isLoading = false,
-                                            );
-                                            ScaffoldMessenger.of(
-                                              context,
-                                            ).showSnackBar(
-                                              const SnackBar(
-                                                content: Text(
-                                                  'Periode aktif tidak valid.',
-                                                ),
-                                              ),
-                                            );
-                                            return;
-                                          }
-
-                                          final activeIndex =
-                                              _tabController.index;
-                                          final CalculatorResult? toSave =
-                                              activeIndex == 0
-                                              ? widget
-                                                    .comparisonResult
-                                                    .sapiResult
-                                              : widget
-                                                    .comparisonResult
-                                                    .kambingResult;
-
-                                          if (toSave == null) {
-                                            if (!mounted) return;
-                                            setModalState(
-                                              () => isLoading = false,
-                                            );
-                                            ScaffoldMessenger.of(
-                                              context,
-                                            ).showSnackBar(
-                                              const SnackBar(
-                                                content: Text(
-                                                  'Tidak ada hasil untuk disimpan pada tab ini.',
-                                                ),
-                                              ),
-                                            );
-                                            return;
-                                          }
-
-                                          final detail = <String, dynamic>{
-                                            'animals': toSave.animals
-                                                .map(
-                                                  (a) => {
-                                                    'type': a.type,
-                                                    'weight': a.weight,
-                                                    'count': a.count,
-                                                  },
-                                                )
-                                                .toList(),
-                                            'totalWeight': toSave.totalWeight,
-                                            'totalBags': toSave.totalBags,
-                                            'allocations': toSave.allocations,
-                                            'recipientCounts':
-                                                toSave.recipientCounts,
-                                            'perBagWeight': toSave.perBagWeight,
-                                            'templateId': toSave.templateId,
-                                          };
-
-                                          String mapTemplateToServer(
-                                            String? tpl,
-                                          ) {
-                                            if (tpl == null || tpl.isEmpty)
-                                              return 'PROPROSIAL_SEDERHANA';
-                                            final s = tpl.toLowerCase();
-                                            if (s.contains('template_c') ||
-                                                s.contains('c') ||
-                                                s.contains('kustom') ||
-                                                s.contains('custom') ||
-                                                s.contains('musyawarah')) {
-                                              return 'DISTRIBUSI_KUSTOM';
-                                            }
-                                            return 'PROPROSIAL_SEDERHANA';
-                                          }
-
-                                          final templateEnum =
-                                              mapTemplateToServer(
-                                                toSave.templateId,
-                                              );
-
-                                          await calculationDataSource
-                                              .createCalculation(
-                                                idPeriode: periodId,
-                                                judul: title,
-                                                jenisHewan: activeIndex == 0
-                                                    ? 'SAPI'
-                                                    : 'KAMBING',
-                                                template: templateEnum,
-                                                detail: detail,
-                                              );
-
-                                          if (!mounted) return;
-                                          // 2. Sukses! Tutup modal
-                                          Navigator.pop(ctx);
-
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            const SnackBar(
-                                              content: Text(
-                                                'Hasil berhasil disimpan',
-                                              ),
-                                            ),
-                                          );
-                                        } catch (e) {
-                                          if (!mounted) return;
-                                          // 3. Gagal! Kembalikan state button dan biarkan modal tetap terbuka
-                                          setModalState(() {
-                                            isLoading = false;
-                                          });
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            SnackBar(
-                                              content: Text(
-                                                'Gagal menyimpan: $e',
-                                              ),
-                                            ),
-                                          );
-                                        }
-                                      },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor:
-                                      AppColors.essentialBrightAccent,
-                                  disabledBackgroundColor: AppColors
-                                      .essentialBrightAccent
-                                      .withValues(alpha: 0.5),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(
-                                      AppRadius.md,
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Simpan Hasil',
+                                    style: TextStyle(
+                                      fontSize: AppTypography.bodyMedium,
+                                      fontWeight: AppTypography.semiBold,
                                     ),
                                   ),
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 16,
-                                  ),
-                                ),
-                                child: isLoading
-                                    ? const SizedBox(
-                                        height: 24,
-                                        width: 24,
-                                        child: CircularProgressIndicator(
-                                          color: Colors.white,
-                                          strokeWidth: 2.5,
-                                        ),
-                                      )
-                                    : const Text(
-                                        'Konfirmasi Simpan',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: AppTypography.semiBold,
+                                  const SizedBox(height: AppSpacing.md),
+                                  TextField(
+                                    controller: titleController,
+                                    autofocus: true,
+                                    autocorrect: false,
+                                    enableSuggestions: false,
+                                    enabled: !isLoading,
+                                    decoration: InputDecoration(
+                                      labelText: 'Judul Perhitungan',
+                                      hintText: 'Masukkan judul...',
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(
+                                          AppRadius.md,
                                         ),
                                       ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: AppSpacing.md),
+                                  SizedBox(
+                                    width: double.infinity,
+                                    child: ElevatedButton(
+                                      onPressed: isLoading
+                                          ? null
+                                          : () async {
+                                              // 2. TUTUP KEYBOARD DULUAN: Agar transisi layout selesai
+                                              // sebelum logic loading berjalan.
+                                              FocusScope.of(context).unfocus();
+
+                                              final title =
+                                                  titleController.text
+                                                      .trim()
+                                                      .isEmpty
+                                                  ? 'Hasil Perhitungan'
+                                                  : titleController.text.trim();
+
+                                              setModalState(() {
+                                                isLoading = true;
+                                              });
+                                              setState(
+                                                () =>
+                                                    _isSavingCalculation = true,
+                                              );
+
+                                              try {
+                                                final prefs =
+                                                    await SharedPreferences.getInstance();
+                                                final cached = prefs.getString(
+                                                  'cached_active_period',
+                                                );
+
+                                                if (cached == null) {
+                                                  if (!mounted) return;
+                                                  setModalState(
+                                                    () => isLoading = false,
+                                                  );
+                                                  setState(
+                                                    () => _isSavingCalculation =
+                                                        false,
+                                                  );
+                                                  ScaffoldMessenger.of(
+                                                    context,
+                                                  ).showSnackBar(
+                                                    const SnackBar(
+                                                      content: Text(
+                                                        'Tidak ada periode aktif. Aktifkan periode terlebih dahulu.',
+                                                      ),
+                                                    ),
+                                                  );
+                                                  return;
+                                                }
+
+                                                final period =
+                                                    jsonDecode(cached)
+                                                        as Map<String, dynamic>;
+                                                final periodId =
+                                                    period['id']?.toString() ??
+                                                    '';
+
+                                                if (periodId.isEmpty) {
+                                                  if (!mounted) return;
+                                                  setModalState(
+                                                    () => isLoading = false,
+                                                  );
+                                                  setState(
+                                                    () => _isSavingCalculation =
+                                                        false,
+                                                  );
+                                                  ScaffoldMessenger.of(
+                                                    context,
+                                                  ).showSnackBar(
+                                                    const SnackBar(
+                                                      content: Text(
+                                                        'Periode aktif tidak valid.',
+                                                      ),
+                                                    ),
+                                                  );
+                                                  return;
+                                                }
+
+                                                final activeIndex =
+                                                    _tabController.index;
+                                                final CalculatorResult? toSave =
+                                                    activeIndex == 0
+                                                    ? widget
+                                                          .comparisonResult
+                                                          .sapiResult
+                                                    : widget
+                                                          .comparisonResult
+                                                          .kambingResult;
+
+                                                if (toSave == null) {
+                                                  if (!mounted) return;
+                                                  setModalState(
+                                                    () => isLoading = false,
+                                                  );
+                                                  setState(
+                                                    () => _isSavingCalculation =
+                                                        false,
+                                                  );
+                                                  ScaffoldMessenger.of(
+                                                    context,
+                                                  ).showSnackBar(
+                                                    const SnackBar(
+                                                      content: Text(
+                                                        'Tidak ada hasil untuk disimpan pada tab ini.',
+                                                      ),
+                                                    ),
+                                                  );
+                                                  return;
+                                                }
+
+                                                final detail =
+                                                    <String, dynamic>{
+                                                      'animals': toSave.animals
+                                                          .map(
+                                                            (a) => {
+                                                              'type': a.type,
+                                                              'weight':
+                                                                  a.weight,
+                                                              'count': a.count,
+                                                            },
+                                                          )
+                                                          .toList(),
+                                                      'totalWeight':
+                                                          toSave.totalWeight,
+                                                      'totalBags':
+                                                          toSave.totalBags,
+                                                      'allocations':
+                                                          toSave.allocations,
+                                                      'recipientCounts': toSave
+                                                          .recipientCounts,
+                                                      'perBagWeight':
+                                                          toSave.perBagWeight,
+                                                      'templateId':
+                                                          toSave.templateId,
+                                                    };
+
+                                                String mapTemplateToServer(
+                                                  String? tpl,
+                                                ) {
+                                                  if (tpl == null ||
+                                                      tpl.isEmpty)
+                                                    return 'PROPROSIAL_SEDERHANA';
+                                                  final s = tpl.toLowerCase();
+                                                  if (s.contains(
+                                                        'template_c',
+                                                      ) ||
+                                                      s.contains('c') ||
+                                                      s.contains('kustom') ||
+                                                      s.contains('custom') ||
+                                                      s.contains(
+                                                        'musyawarah',
+                                                      )) {
+                                                    return 'DISTRIBUSI_KUSTOM';
+                                                  }
+                                                  return 'PROPROSIAL_SEDERHANA';
+                                                }
+
+                                                final templateEnum =
+                                                    mapTemplateToServer(
+                                                      toSave.templateId,
+                                                    );
+
+                                                await calculationDataSource
+                                                    .createCalculation(
+                                                      idPeriode: periodId,
+                                                      judul: title,
+                                                      jenisHewan:
+                                                          activeIndex == 0
+                                                          ? 'SAPI'
+                                                          : 'KAMBING',
+                                                      template: templateEnum,
+                                                      detail: detail,
+                                                    );
+
+                                                if (!mounted) return;
+
+                                                // 3. TUTUP MODAL DENGAN AMAN menggunakan context dari modal (ctx)
+                                                Navigator.of(ctx).pop();
+
+                                                setState(
+                                                  () => _isSavingCalculation =
+                                                      false,
+                                                );
+
+                                                ScaffoldMessenger.of(
+                                                  context,
+                                                ).showSnackBar(
+                                                  const SnackBar(
+                                                    content: Text(
+                                                      'Hasil berhasil disimpan',
+                                                    ),
+                                                  ),
+                                                );
+                                              } catch (e) {
+                                                if (!mounted) return;
+                                                setModalState(() {
+                                                  isLoading = false;
+                                                });
+                                                setState(
+                                                  () => _isSavingCalculation =
+                                                      false,
+                                                );
+                                                ScaffoldMessenger.of(
+                                                  context,
+                                                ).showSnackBar(
+                                                  SnackBar(
+                                                    content: Text(
+                                                      'Gagal menyimpan: $e',
+                                                    ),
+                                                  ),
+                                                );
+                                              }
+                                            },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor:
+                                            AppColors.essentialBrightAccent,
+                                        disabledBackgroundColor: AppColors
+                                            .essentialBrightAccent
+                                            .withValues(alpha: 0.5),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            AppRadius.md,
+                                          ),
+                                        ),
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 16,
+                                        ),
+                                      ),
+                                      child: isLoading
+                                          ? const SizedBox(
+                                              height: 24,
+                                              width: 24,
+                                              child: CircularProgressIndicator(
+                                                color: Colors.white,
+                                                strokeWidth: 2.5,
+                                              ),
+                                            )
+                                          : const Text(
+                                              'Konfirmasi Simpan',
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontWeight:
+                                                    AppTypography.semiBold,
+                                              ),
+                                            ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: AppSpacing.md),
+                                ],
                               ),
-                            ),
-                            const SizedBox(height: AppSpacing.md),
-                          ],
-                        ),
-                      );
-                    },
-                  );
-                },
-              );
-            },
+                            );
+                          },
+                        );
+                      },
+                    );
+                  },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.essentialBrightAccent,
               shape: RoundedRectangleBorder(

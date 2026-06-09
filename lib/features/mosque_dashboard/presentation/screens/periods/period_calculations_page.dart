@@ -88,8 +88,30 @@ class _PeriodCalculationsPageState extends State<PeriodCalculationsPage>
   }
 
   Future<void> _deleteItem(String id) async {
-    setState(() => _items.removeWhere((e) => e['id'] == id));
-    await _saveItems();
+    // Optimistically remove from local list, attempt delete on server,
+    // and revert if the server call fails.
+    final index = _items.indexWhere((e) => e['id'] == id);
+    if (index == -1) return;
+    final removed = _items[index];
+    setState(() => _items.removeAt(index));
+    try {
+      await calculationDataSource.deleteCalculation(id);
+      await _saveItems();
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Perhitungan berhasil dihapus')),
+        );
+      }
+    } catch (e) {
+      // revert
+      setState(() => _items.insert(index, removed));
+      await _saveItems();
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal menghapus perhitungan: $e')),
+        );
+      }
+    }
   }
 
   void _showEditNameDialog(Map<String, dynamic> item) {
@@ -101,35 +123,92 @@ class _PeriodCalculationsPageState extends State<PeriodCalculationsPage>
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Ubah Nama Perhitungan'),
-        content: TextField(
-          controller: nameController,
-          autofocus: true,
-          decoration: const InputDecoration(
-            hintText: 'Masukkan nama baru...',
-            border: UnderlineInputBorder(),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Batal'),
-          ),
-          TextButton(
-            onPressed: () async {
-              if (nameController.text.trim().isNotEmpty) {
-                setState(() {
-                  item['title'] = nameController.text.trim();
-                });
-                await _saveItems();
-              }
-              if (context.mounted) Navigator.pop(context);
-            },
-            child: const Text('Simpan'),
-          ),
-        ],
-      ),
+      builder: (context) {
+        bool _saving = false;
+        return StatefulBuilder(
+          builder: (context, setStateDialog) {
+            return AlertDialog(
+              title: const Text('Ubah Nama Perhitungan'),
+              content: TextField(
+                controller: nameController,
+                autofocus: true,
+                decoration: const InputDecoration(
+                  hintText: 'Masukkan nama baru...',
+                  border: UnderlineInputBorder(),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: _saving ? null : () => Navigator.pop(context),
+                  child: const Text('Batal'),
+                ),
+                TextButton(
+                  onPressed: _saving
+                      ? null
+                      : () async {
+                          if (nameController.text.trim().isNotEmpty) {
+                            final newTitle = nameController.text.trim();
+                            final oldTitle = item['title'];
+                            // Optimistically update UI
+                            setState(() {
+                              item['title'] = newTitle;
+                            });
+
+                            setStateDialog(() => _saving = true);
+                            try {
+                              final res = await calculationDataSource
+                                  .updateCalculationTitle(
+                                    item['id'].toString(),
+                                    newTitle,
+                                  );
+                              if (res.isNotEmpty) {
+                                item.addAll(res);
+                                item['title'] =
+                                    res['judul'] ?? res['title'] ?? newTitle;
+                              }
+                              await _saveItems();
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Nama perhitungan diperbarui',
+                                    ),
+                                  ),
+                                );
+                              }
+                            } catch (e) {
+                              // revert on failure
+                              setState(() {
+                                item['title'] = oldTitle;
+                              });
+                              await _saveItems();
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Gagal memperbarui nama: $e'),
+                                  ),
+                                );
+                              }
+                            } finally {
+                              if (mounted)
+                                setStateDialog(() => _saving = false);
+                            }
+                          }
+                          if (context.mounted) Navigator.pop(context);
+                        },
+                  child: _saving
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Simpan'),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 
